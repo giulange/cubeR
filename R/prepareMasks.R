@@ -1,6 +1,5 @@
 #' Prepares valid pixel masks
-#' @description
-#' Creates a binary valid pixels mask frpm an S2's SCL image.
+#' @description Creates a binary valid pixels mask frpm an S2's SCL image.
 #'
 #' It is a two-steps procedure. In the first step groups of
 #' \code{bufferedValues} pixels are buffered with a radius of a
@@ -9,12 +8,16 @@
 #' are considered invali. In the second step all pixels in the
 #' \code{invalidValues} range are marked as invalid. The final mask marks pixels
 #' as valid if they weren't marked invalid on any any of steps.
-#' @param tiles a data frame describing tiled images obtained from \code{\link{retile}}
+#' @param tiles a data frame describing tiled images obtained from
+#'   \code{\link{prepareTiles}}
 #' @param tmpDir a directory for temporary files
-#' @param minArea min \code{bufferedPixels} group area to include the area in the buffering step (see the description)
-#' @param bufferSize size (in pixels) of a buffer created along areas having \code{bufferedPixels} values
+#' @param minArea min \code{bufferedPixels} group area to include the area in
+#'   the buffering step (see the description)
+#' @param bufferSize size (in pixels) of a buffer created along areas having
+#'   \code{bufferedPixels} values
 #' @param invalidValues a set of values in the S2's SCL file considered invalid
-#' @param bufferedValues a set of values in th2 S2's SCL file processed in the buffering step (see the description)
+#' @param bufferedValues a set of values in th2 S2's SCL file processed in the
+#'   buffering step (see the description)
 #' @return data frame describing created masks
 #' @import dplyr
 #' @export

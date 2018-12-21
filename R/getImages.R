@@ -2,10 +2,12 @@
 #' @param roiId an id of a region of interest which to be fetched
 #' @param dateMin minimum acquisition date of an image
 #' @param dateMax maximum acquisition date of an image
-#' @param dir a target directory (although this function doesn't download files it creates target file paths)
+#' @param dir a target directory (although this function doesn't download files
+#'   it creates target file paths)
 #' @param projection a projection of the returned images extent
 #' @param bands list of bands to be fetched
-#' @param ... another parameters to be passed to the \code{\link[sentinel2]{S2_query_image}}
+#' @param ... another parameters to be passed to the
+#'   \code{\link[sentinel2]{S2_query_image}}
 #' @return data frame describing matching images
 #' @import dplyr
 #' @export
