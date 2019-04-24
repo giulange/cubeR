@@ -1,9 +1,8 @@
 args = commandArgs(TRUE)
-source(args[1])
 if (length(args) < 6) {
   stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo')
 }
-
+source(args[1])
 
 devtools::load_all(cubeRpath)
 library(sentinel2, quietly = TRUE)
