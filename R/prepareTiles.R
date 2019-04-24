@@ -72,7 +72,7 @@ prepareTiles = function(images, targetDir, gridFile, tmpDir, method = 'bilinear'
     dplyr::group_by(date, band, tile, tileFile) %>%
     dplyr::do({
       system(.$command, ignore.stdout = TRUE)
-      dplyr::data_frame(success = TRUE)
+      dplyr::tibble(success = TRUE)
     }) %>%
     dplyr::select(-success)
 

@@ -17,10 +17,8 @@ getImages = function(roiId, dateMin, dateMax, dir, projection, bands = c('B02', 
   }
 
   granules = sentinel2::S2_query_granule(regionId = roiId, dateMin = dateMin, dateMax = dateMax, atmCorr = TRUE, owned = TRUE, spatial = 'sf') %>%
-    dplyr::as.tbl() %>%
     dplyr::select(granuleId, geometry) %>%
-    dplyr::mutate(geometry = purrr::map(geometry, sf::st_transform, projection)) %>%
-    dplyr::ungroup()
+    dplyr::mutate(geometry = purrr::map(geometry, sf::st_transform, projection))
   imgs = dplyr::as.tbl(sentinel2::S2_query_image(regionId = roiId, dateMin = dateMin, dateMax = dateMax, atmCorr = TRUE, owned = TRUE, ...))
   imgs = imgs %>%
     dplyr::group_by(granuleId, band) %>%
@@ -29,7 +27,7 @@ getImages = function(roiId, dateMin, dateMax, dir, projection, bands = c('B02', 
     dplyr::filter(n() == length(bands)) %>%
     dplyr::ungroup() %>%
     dplyr::inner_join(granules) %>%
-    dplyr::mutate(date = substr(date, 1, 10))
-  imgs$file = sprintf('%s/%s_%s_%s.tif', dir, imgs$date, imgs$band, imgs$utm)
+    dplyr::mutate(date = substr(date, 1, 10)) %>%
+    dplyr::mutate(file = sprintf('%s/%s_%s_%s.tif', dir, date, band, utm))
   return(imgs)
 }

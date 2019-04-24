@@ -7,6 +7,7 @@
 #' @export
 prepareNdvi = function(tiles) {
   ndvi = tiles %>%
+    dplyr::select(date, tile, band, tileFile) %>%
     dplyr::group_by(date, tile) %>%
     dplyr::filter(band %in% c('CLOUDMASK', 'B04', 'B08')) %>%
     tidyr::spread('band', 'tileFile') %>%
@@ -23,7 +24,7 @@ prepareNdvi = function(tiles) {
     dplyr::group_by(date, tile) %>%
     dplyr::do({
       system(.$command, ignore.stdout = TRUE)
-      dplyr::data_frame(band = 'NDVI', tileFile = .$tileFile)
+      dplyr::tibble(band = 'NDVI', tileFile = .$tileFile)
     })
   return(ndvi)
 }

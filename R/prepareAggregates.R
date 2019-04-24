@@ -26,7 +26,7 @@ prepareAggregates = function(tiles, targetDir, tmpDir) {
     dplyr::group_by(date, band, tile) %>%
     do({
       system(.$command, ignore.stdout = TRUE)
-      dplyr::data_frame(tileFile = .$tileFile, nodataFile = .$nodataFile)
+      dplyr::tibble(tileFile = .$tileFile, nodataFile = .$nodataFile)
     })
   on.exit({
     unlink(nodata$nodataFile)
@@ -74,7 +74,7 @@ prepareAggregates = function(tiles, targetDir, tmpDir) {
       ret = system(.$stage2Command, ignore.stdout = TRUE)
       if (ret != 0) cat(.$stage2Command, '\n')
       unlink(.$stage1File)
-      dplyr::data_frame(whichFile = .$stage2File)
+      dplyr::tibble(whichFile = .$stage2File)
     })
   print(Sys.time())
 
@@ -106,7 +106,7 @@ prepareAggregates = function(tiles, targetDir, tmpDir) {
     dplyr::group_by(month, tile, band) %>%
     dplyr::do({
       system(.$command, ignore.stdout = TRUE)
-      dplyr::data_frame(aggFile = .$aggFile)
+      dplyr::tibble(aggFile = .$aggFile)
     })
   return(agg)
 }

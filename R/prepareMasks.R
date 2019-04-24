@@ -12,9 +12,10 @@
 #'   \code{\link{prepareTiles}}
 #' @param tmpDir a directory for temporary files
 #' @param minArea min \code{bufferedPixels} group area to include the area in
-#'   the buffering step (see the description)
+#'   the buffering step (0 for no area-based pixel exclusion, see the
+#'   description for details)
 #' @param bufferSize size (in pixels) of a buffer created along areas having
-#'   \code{bufferedPixels} values
+#'   \code{bufferedPixels} values (use 0 for no buffer)
 #' @param invalidValues a set of values in the S2's SCL file considered invalid
 #' @param bufferedValues a set of values in th2 S2's SCL file processed in the
 #'   buffering step (see the description)
@@ -34,24 +35,31 @@ prepareMasks = function(tiles, tmpDir, minArea = 25L, bufferSize = 10L, invalidV
     do({
       mask = raster::raster(.$tileFile)
 
-      buffered = raster::getValues(mask)
-      buffered = as.integer(buffered %in% bufferedValues)
-      buffered = matrix(buffered, nrow = raster::nrow(mask), ncol = raster::ncol(mask))
-      segments = mmand::components(buffered, mmand::shapeKernel(c(3L, 3L), type = 'diamond'))
-      area = tabulate(segments)
-      exclude = segments %in% which(area < minArea)
-      buffered[exclude] = 0L
+      if (minArea > 0L | bufferSize > 0L) {
+        buffered = raster::getValues(mask)
+        buffered = as.integer(buffered %in% bufferedValues)
+        buffered = matrix(buffered, nrow = raster::nrow(mask), ncol = raster::ncol(mask))
+      }
 
-      # buffer with gdal_proximity cause it's 100 times faster then mmand::dilate() for large kernels
-      tmp = raster::raster(mask)
-      tmp = raster::setValues(tmp, as.vector(buffered))
-      tmpFileIn = paste0(tmpDir, '/', .$date, '_CLOUDS_', .$tile, '.tif')
-      raster::writeRaster(tmp, tmpFileIn, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L)
-      tmpFileOut = paste0(tmpDir, '/', .$date, '_BUFFERED_', .$tile, '.tif')
-      command = sprintf('gdal_proximity.py %s %s -ot Byte -maxdist 10 -distunits PIXEL -fixed-buf-val 1 -values 1 -nodata 2', tmpFileIn, tmpFileOut)
-      system(command, ignore.stdout = TRUE)
-      buffered = raster::getValues(raster::raster(tmpFileOut))
-      unlink(c(tmpFileIn, tmpFileOut))
+      if (minArea > 0L) {
+        segments = mmand::components(buffered, mmand::shapeKernel(c(3L, 3L), type = 'diamond'))
+        area = tabulate(segments)
+        exclude = segments %in% which(area < minArea)
+        buffered[exclude] = 0L
+      }
+
+      if (bufferSize > 0L) {
+        # buffer with gdal_proximity cause it's 100 times faster then mmand::dilate() for large kernels
+        tmp = raster::raster(mask)
+        tmp = raster::setValues(tmp, as.vector(buffered))
+        tmpFileIn = paste0(tmpDir, '/', .$date, '_CLOUDS_', .$tile, '.tif')
+        raster::writeRaster(tmp, tmpFileIn, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L)
+        tmpFileOut = paste0(tmpDir, '/', .$date, '_BUFFERED_', .$tile, '.tif')
+        command = sprintf('gdal_proximity.py %s %s -ot Byte -maxdist 10 -distunits PIXEL -fixed-buf-val 1 -values 1 -nodata 2', tmpFileIn, tmpFileOut)
+        system(command, ignore.stdout = TRUE)
+        buffered = raster::getValues(raster::raster(tmpFileOut))
+        unlink(c(tmpFileIn, tmpFileOut))
+      }
 
       invalid = raster::getValues(mask)
       invalid = 255L * as.integer(invalid %in% invalidValues | is.na(invalid) | buffered < 2L)
@@ -60,7 +68,7 @@ prepareMasks = function(tiles, tmpDir, minArea = 25L, bufferSize = 10L, invalidV
       tileFile = paste0(dirname(.$tileFile), '/', .$date, '_CLOUDMASK_', .$tile, '.tif')
       raster::writeRaster(mask, tileFile, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L, options = 'COMPRESS=DEFLATE')
 
-      dplyr::data_frame(band = 'CLOUDMASK', tileFile = tileFile)
+      dplyr::tibble(band = 'CLOUDMASK', tileFile = tileFile)
     }) %>%
     dplyr::ungroup()
 
