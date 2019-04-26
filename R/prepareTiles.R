@@ -1,7 +1,8 @@
 #' Generates EQUI7 tiles
 #' @param images a data frame decscribing raw images to be retiled obtained with
 #'   \code{\link{getImages}}
-#' @param targetDir a directory where tiles should be saved
+#' @param targetDir a directory where tiles should be saved (a separate
+#'   subdirectory for each tile will be created)
 #' @param gridFile a file providing a tiling grid (in any file format supported
 #'   by the \code{\link[sf]{read_sf}}). All features have to have a \code{TILE}
 #'   attribute denoting the tile name. The tiles projection will follow the grid
@@ -14,9 +15,6 @@
 #' @export
 prepareTiles = function(images, targetDir, gridFile, tmpDir, method = 'bilinear') {
   options(scipen = 100)
-  if (!dir.exists(targetDir)) {
-    dir.create(targetDir, recursive = TRUE)
-  }
   if (!dir.exists(tmpDir)) {
     dir.create(tmpDir, recursive = TRUE)
   }
@@ -63,10 +61,16 @@ prepareTiles = function(images, targetDir, gridFile, tmpDir, method = 'bilinear'
     ) %>%
     dplyr::inner_join(gridBbox) %>%
     dplyr::mutate(
-      tileFile = paste0(targetDir, '/', date, '_', band, '_', tile, '.tif')
+      tileFile = sprintf('%s/%s/%s_%s_%s.tif', targetDir, tile, date, band, tile)
     ) %>%
     dplyr::mutate(command = paste('gdalwarp -overwrite -co "COMPRESS=DEFLATE" -te', bbox, inputFiles, tileFile)) %>%
     dplyr::select(-inputFiles, -bbox)
+
+  # create target directory structure
+  for (i in unique(dirname(tiles$tileFile))) {
+    dir.create(i, recursive = TRUE, showWarnings = FALSE)
+  }
+
   # retile
   tiles = tiles %>%
     dplyr::group_by(date, band, tile, tileFile) %>%

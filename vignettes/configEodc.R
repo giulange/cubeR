@@ -5,4 +5,7 @@ rawDir = '/eodc/private/boku/ACube2/raw'
 tilesDir = '/eodc/private/boku/ACube2/tiles'
 resamplingMethod = 'near'
 bands = c('B04', 'B08', 'SCL', 'LAI')
-
+nCores = 8
+dwnldNCores = 4
+dwnldTimeout = 120
+dwnldSkipExisting = TRUE

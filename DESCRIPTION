@@ -8,6 +8,7 @@ Authors@R: c(
   )
 License: MIT + file LICENSE
 Imports:
+    doParallel,
     dplyr,
     mmand,
     purrr,

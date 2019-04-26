@@ -5,4 +5,7 @@ rawDir = '/home/zozlak/roboty/BOKU/cube/data/raw'
 tilesDir = '/home/zozlak/roboty/BOKU/cube/data/tiles'
 resamplingMethod = 'near'
 bands = c('B04', 'B08', 'SCL', 'LAI')
-
+nCores = 8
+dwnldNCores = 4
+dwnldTimeout = 120
+dwnldSkipExisting = TRUE
