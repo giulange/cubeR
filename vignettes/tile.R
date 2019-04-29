@@ -19,7 +19,7 @@ if (!all(file.exists(images$file))) {
   stop('raw file missing - run dwnld.R first')
 }
 
-cat('Tiling\n')
+cat(paste('Tiling', nrow(images), 'images', Sys.time(), '\n'))
 groups = images %>%
   select(date, band) %>%
   arrange(desc(date), band) %>%
@@ -32,3 +32,4 @@ tiles = foreach(dt = groups$date, bnd = groups$band, .combine = bind_rows) %dopa
     prepareTiles(tilesDir, tmpDir, resamplingMethod, tilesSkipExisting)
   tilesTmp
 }
+cat(paste(nrow(tiles), 'tiles produced', Sys.time(), '\n'))
