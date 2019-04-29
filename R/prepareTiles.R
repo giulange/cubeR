@@ -15,11 +15,13 @@
 #' @return data frame describing created tiles
 #' @import dplyr
 #' @export
-prepareTiles = function(rawTilesMap, targetDir, tmpDir, method = 'bilinear', skipExisting = TRUE) {
+prepareTiles = function(rawTilesMap, targetDir, gridFile, tmpDir, method = 'bilinear', skipExisting = TRUE) {
   options(scipen = 100)
   if (!dir.exists(tmpDir)) {
     dir.create(tmpDir, recursive = TRUE)
   }
+  grid = sf::read_sf(gridFile)
+  prj = sf::st_crs(sf::st_read(gridFile))$proj4string
 
   noData = dplyr::tibble(
     band = c(sprintf('B%02d', 1:12), 'B8A', 'AOT', 'CLD', 'DEM', 'PVI', 'SCL', 'SNW', 'TCI', 'VIS', 'WVP', 'albedo', 'FAPAR', 'FCOVER', 'LAI'),
@@ -64,16 +66,16 @@ prepareTiles = function(rawTilesMap, targetDir, tmpDir, method = 'bilinear', ski
     dplyr::inner_join(noData) %>%
     dplyr::group_by(date, band, utm, file) %>%
     dplyr::mutate(
-      equi7File = path.expand(paste0(tmpDir, '/', basename(file))),
+      equi7File = path.expand(paste0(tmpDir, '/', basename(file)))
     ) %>%
     dplyr::mutate(
-      command = paste('gdalwarp -overwrite -tr 10.0 10.0 -r ', dplyr::if_else(band %in% 'SCL', 'near', method), ' -srcnodata', nodata, '-t_srs', paste0('"', projection, '"'), paste0('"', path.expand(file), '"'), paste0('"', equi7File, '"'))
+      command = paste('gdalwarp -overwrite -tr 10.0 10.0 -r ', dplyr::if_else(band %in% 'SCL', 'near', method), ' -srcnodata', nodata, '-t_srs', paste0('"', prj, '"'), paste0('"', path.expand(file), '"'), paste0('"', equi7File, '"'))
     )
   imgs = imgs %>%
     dplyr::group_by(date, band, utm, file, equi7File) %>%
     dplyr::do({
       system(.$command, ignore.stdout = TRUE)
-      dplyr::data_frame(success = TRUE)
+      dplyr::tibble(success = TRUE)
     }) %>%
     dplyr::ungroup() %>%
     dplyr::select(-file, -success)
@@ -90,7 +92,10 @@ prepareTiles = function(rawTilesMap, targetDir, tmpDir, method = 'bilinear', ski
     dplyr::mutate(
       tileFile = sprintf('%s/%s/%s_%s_%s.tif', targetDir, tile, date, band, tile)
     ) %>%
-    dplyr::mutate(command = paste('gdalwarp -overwrite -co "COMPRESS=DEFLATE" -te', bbox, inputFiles, tileFile)) %>%
+    dplyr::mutate(
+      tileFileTmp = paste0(tmpDir, '/', basename(tileFile))
+    ) %>%
+    dplyr::mutate(command = paste('gdalwarp -overwrite -co "COMPRESS=DEFLATE" -te', bbox, inputFiles, tileFileTmp, '&& mv', tileFileTmp, tileFile)) %>%
     dplyr::select(-inputFiles, -bbox)
 
   tiles = tiles %>%

@@ -29,7 +29,7 @@ tiles = foreach(dt = groups$date, bnd = groups$band, .combine = bind_rows) %dopa
   tilesTmp = images %>%
     filter(date == dt & band == bnd) %>%
     mapRawTiles(gridFile) %>%
-    prepareTiles(tilesDir, tmpDir, resamplingMethod, tilesSkipExisting)
+    prepareTiles(tilesDir, gridFile, tmpDir, resamplingMethod, tilesSkipExisting)
   tilesTmp
 }
 cat(paste(nrow(tiles), 'tiles produced', Sys.time(), '\n'))
