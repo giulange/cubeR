@@ -16,17 +16,18 @@ projection = sf::st_crs(sf::st_read(gridFile))
 
 images = getImages(args[4], args[5], args[6], rawDir, projection, bands) %>%
   arrange(date, band)
-cat('Downloading', nrow(images), 'files')
+cat('Downloading\n')
 options(cores = dwnldNCores)
-tmp = foreach(url = images$url, file = images$file, .combine = c) %dopar% {
-  n = 0
-  while (!file.exists(file) | file.size(file) == 0) {
-    n = n + 1
-    try(sentinel2::S2_download(url, file, skipExisting = dwnldSkipExisting, progressBar = FALSE, timeout = dwnldTimeout), silent = TRUE)
+results = rep(FALSE, nrow(images))
+while (!all(results)) {
+  cat(sprintf('%d/%d (%d%%) %s\n', sum(results), length(results), 100 * sum(results) / length(results), Sys.time()))
+  results = foreach(url = images$url, file = images$file, .combine = c) %dopar% {
+    try(sentinel2::S2_download(url, file, progressBar = FALSE, skipExisting = dwnldSkipExisting, timeout = dwnldTimeout, tries = dwnldTries), silent = TRUE)
   }
-  n
 }
+cat(sprintf('%d/%d (%d%%) %s\n', sum(results), length(results), 100 * sum(results) / length(results), Sys.time()))
 
+cat('Tiling\n')
 groups = images %>%
   select(date, band) %>%
   distinct()
