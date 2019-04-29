@@ -20,7 +20,7 @@ cat('Downloading\n')
 options(cores = dwnldNCores)
 results = rep(FALSE, nrow(images))
 while (!all(results)) {
-  cat(sprintf('%d/%d (%d%%) %s\n', sum(results), length(results), 100 * sum(results) / length(results), Sys.time()))
+  cat(sprintf('%d/%d (%d%%) %s\n', sum(results), length(results), as.integer(100 * sum(results) / length(results)), Sys.time()))
   results = foreach(url = images$url, file = images$file, .combine = c) %dopar% {
     try(sentinel2::S2_download(url, file, progressBar = FALSE, skipExisting = dwnldSkipExisting, timeout = dwnldTimeout, tries = dwnldTries), silent = TRUE)
   }
