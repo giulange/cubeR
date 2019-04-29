@@ -1,6 +1,7 @@
 #' Generates EQUI7 tiles
-#' @param images a data frame decscribing raw images to be retiled obtained with
-#'   \code{\link{getImages}}
+#' @param rawTilesMap a data frame describing raw images to tiles mapping
+#'   obtained from \code{\link{mapRawTiles}}. \ Must have at least \code{date,
+#'   band, utm, file, tile, bbox} columns
 #' @param targetDir a directory where tiles should be saved (a separate
 #'   subdirectory for each tile will be created)
 #' @param gridFile a file providing a tiling grid (in any file format supported
@@ -10,29 +11,56 @@
 #' @param tmpDir a directory for temporary files
 #' @param method resampling method (near, bilinear, cubic, cubicspline, lanczos,
 #'   average, mode, max, min, med, q1, q3 - see gdalwarp doc)
+#' @param skipExisting should already existing tiles be skipped?
 #' @return data frame describing created tiles
 #' @import dplyr
 #' @export
-prepareTiles = function(images, targetDir, gridFile, tmpDir, method = 'bilinear') {
+prepareTiles = function(rawTilesMap, targetDir, tmpDir, method = 'bilinear', skipExisting = TRUE) {
   options(scipen = 100)
   if (!dir.exists(tmpDir)) {
     dir.create(tmpDir, recursive = TRUE)
   }
 
-  noData = dplyr::data_frame(
+  noData = dplyr::tibble(
     band = c(sprintf('B%02d', 1:12), 'B8A', 'AOT', 'CLD', 'DEM', 'PVI', 'SCL', 'SNW', 'TCI', 'VIS', 'WVP', 'albedo', 'FAPAR', 'FCOVER', 'LAI'),
     nodata = c(rep(0, 22), 65535, rep(32767, 3))
   )
-  grid = sf::read_sf(gridFile)
-  projection = sf::st_crs(grid)$proj4string
-  gridBbox = dplyr::data_frame(
-    tile = grid$TILE,
-    bbox = purrr::map(grid$geometry, sf::st_bbox)
-  ) %>%
-    dplyr::mutate(bbox = purrr::map_chr(bbox, paste, collapse = ' '))
 
-  # reproject
-  imgs = images %>%
+  # generate output file names
+  rawTilesMap = rawTilesMap %>%
+    dplyr::mutate(
+      tileFile = sprintf('%s/%s/%s_%s_%s.tif', targetDir, tile, date, band, tile)
+    )
+
+  # create target directory structure
+  for (i in unique(dirname(rawTilesMap$tileFile))) {
+    dir.create(i, recursive = TRUE, showWarnings = FALSE)
+  }
+
+  # skip already existing tiles
+  skipped = dplyr::tibble(tileFile = character())
+  if (skipExisting) {
+    rawTilesMap = rawTilesMap %>%
+      dplyr::left_join(
+        rawTilesMap %>%
+          dplyr::select(tileFile) %>%
+          dplyr::distinct() %>%
+          dplyr::mutate(exists = file.exists(tileFile))
+      )
+    skipped = rawTilesMap %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(exists) %>%
+      dplyr::select(date, band, tile, tileFile) %>%
+      dplyr::distinct()
+    rawTilesMap = rawTilesMap %>%
+      dplyr::filter(!exists) %>%
+      dplyr::select(-exists)
+  }
+
+  # reproject raw files
+  imgs = rawTilesMap %>%
+    dplyr::select(date, band, utm, file) %>%
+    dplyr::distinct() %>%
     dplyr::inner_join(noData) %>%
     dplyr::group_by(date, band, utm, file) %>%
     dplyr::mutate(
@@ -45,33 +73,26 @@ prepareTiles = function(images, targetDir, gridFile, tmpDir, method = 'bilinear'
     dplyr::group_by(date, band, utm, file, equi7File) %>%
     dplyr::do({
       system(.$command, ignore.stdout = TRUE)
-      dplyr::data_frame(geometry = .$geometry)
+      dplyr::data_frame(success = TRUE)
     }) %>%
     dplyr::ungroup() %>%
-    dplyr::select(-file)
+    dplyr::select(-file, -success)
 
-  # map images to grid tiles
-  tiles = imgs %>%
-    dplyr::group_by(date, band, equi7File) %>%
-    dplyr::mutate(tile = list(grid$TILE[sf::st_intersects(grid, geometry[[1]], sparse = FALSE)])) %>%
-    tidyr::unnest(tile) %>%
-    dplyr::group_by(date, band, tile) %>%
+  on.exit(unlink(imgs$equi7File))
+
+  # retile
+  tiles = rawTilesMap %>%
+    dplyr::left_join(imgs) %>%
+    dplyr::group_by(date, band, tile, bbox) %>%
     dplyr::summarize(
       inputFiles = paste0('"', equi7File, '"', collapse = ' ')
     ) %>%
-    dplyr::inner_join(gridBbox) %>%
     dplyr::mutate(
       tileFile = sprintf('%s/%s/%s_%s_%s.tif', targetDir, tile, date, band, tile)
     ) %>%
     dplyr::mutate(command = paste('gdalwarp -overwrite -co "COMPRESS=DEFLATE" -te', bbox, inputFiles, tileFile)) %>%
     dplyr::select(-inputFiles, -bbox)
 
-  # create target directory structure
-  for (i in unique(dirname(tiles$tileFile))) {
-    dir.create(i, recursive = TRUE, showWarnings = FALSE)
-  }
-
-  # retile
   tiles = tiles %>%
     dplyr::group_by(date, band, tile, tileFile) %>%
     dplyr::do({
@@ -80,7 +101,5 @@ prepareTiles = function(images, targetDir, gridFile, tmpDir, method = 'bilinear'
     }) %>%
     dplyr::select(-success)
 
-  unlink(imgs$equi7File)
-
-  return(tiles)
+  return(bind_rows(skipped, tiles))
 }

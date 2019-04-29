@@ -10,3 +10,4 @@ dwnldNCores = 4
 dwnldTimeout = 120
 dwnldSkipExisting = 'samesize'
 dwnldTries = 2
+tilesSkipExisting = TRUE
