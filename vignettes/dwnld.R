@@ -26,16 +26,3 @@ while (!all(results)) {
   }
 }
 cat(sprintf('%d/%d (%d%%) %s\n', sum(results), length(results), 100 * sum(results) / length(results), Sys.time()))
-
-cat('Tiling\n')
-groups = images %>%
-  select(date, band) %>%
-  distinct()
-options(cores = nCores)
-tiles = foreach(dt = groups$date, bnd = groups$band, .combine = bind_rows) %dopar% {
-  tilesTmp = images %>%
-    filter(date == dt & band == bnd) %>%
-    prepareTiles(tilesDir, gridFile, tmpDir, resamplingMethod) %>%
-    select(-date, -band)
-  tilesTmp
-}
