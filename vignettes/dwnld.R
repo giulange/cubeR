@@ -20,8 +20,8 @@ images = getImages(args[4], args[5], args[6], rawDir, projection, bands) %>%
 cat('Downloading\n')
 options(cores = dwnldNCores)
 toGo = images %>%
-    select(url, file) %>%
-    arrange(desc(date), utm, band)
+    arrange(desc(date), utm, band) %>%
+    select(url, file)
 while (nrow(toGo) > 0) {
   cat(sprintf('%d/%d (%d%%) %s\n', nrow(images) - nrow(toGo), nrow(images), as.integer(100 * (nrow(images) - nrow(toGo)) / nrow(images)), Sys.time()))
   results = foreach(url = toGo$url, file = toGo$file, .combine = c) %dopar% {
