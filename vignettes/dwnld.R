@@ -2,6 +2,7 @@ args = commandArgs(TRUE)
 if (length(args) < 6) {
   stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo')
 }
+cat(c('Running dwnld.R', args, as.character(Sys.time()), '\n'))
 source(args[1])
 
 devtools::load_all(cubeRpath)
@@ -18,11 +19,14 @@ images = getImages(args[4], args[5], args[6], rawDir, projection, bands) %>%
   arrange(date, band)
 cat('Downloading\n')
 options(cores = dwnldNCores)
-results = rep(FALSE, nrow(images))
-while (!all(results)) {
-  cat(sprintf('%d/%d (%d%%) %s\n', sum(results), length(results), as.integer(100 * sum(results) / length(results)), Sys.time()))
-  results = foreach(url = images$url, file = images$file, .combine = c) %dopar% {
-    try(sentinel2::S2_download(url, file, progressBar = FALSE, skipExisting = dwnldSkipExisting, timeout = dwnldTimeout, tries = dwnldTries), silent = TRUE)
+toGo = images %>%
+    select(url, file) %>%
+    arrange(desc(date), utm, band)
+while (nrow(toGo) > 0) {
+  cat(sprintf('%d/%d (%d%%) %s\n', nrow(images) - nrow(toGo), nrow(images), as.integer(100 * (nrow(images) - nrow(toGo)) / nrow(images)), Sys.time()))
+  results = foreach(url = toGo$url, file = toGo$file, .combine = c) %dopar% {
+    try(sentinel2::S2_download(url, file, progressBar = FALSE, skipExisting = dwnldSkipExisting, timeout = dwnldTimeout, tries = dwnldTries, zip = FALSE), silent = TRUE)
   }
+  toGo = toGo[!results, ]
 }
-cat(sprintf('%d/%d (%d%%) %s\n', sum(results), length(results), 100 * sum(results) / length(results), Sys.time()))
+cat(sprintf('%d/%d (100%%) %s\n', nrow(images), nrow(images), Sys.time()))

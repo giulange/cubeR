@@ -2,6 +2,7 @@ args = commandArgs(TRUE)
 if (length(args) < 6) {
   stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo')
 }
+cat(c('Running tile.R', args, as.character(Sys.time()), '\n'))
 source(args[1])
 
 devtools::load_all(cubeRpath)
