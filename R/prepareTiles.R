@@ -90,7 +90,7 @@ prepareTiles = function(rawTilesMap, targetDir, gridFile, tmpDir, method = 'bili
       inputFiles = paste0('"', equi7File, '"', collapse = ' ')
     ) %>%
     dplyr::mutate(
-      tileFile = sprintf('%s/%s/%s_%s_%s.tif', targetDir, tile, date, band, tile)
+      tileFile = getTilePath(targetDir, tile, date, band)
     ) %>%
     dplyr::mutate(
       tileFileTmp = paste0(tmpDir, '/', basename(tileFile))

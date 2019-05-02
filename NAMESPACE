@@ -3,6 +3,8 @@
 export(applySnapWorkflow)
 export(getImages)
 export(getS1Products)
+export(getTilePath)
+export(mapRawTiles)
 export(prepareAggregates)
 export(prepareMasks)
 export(prepareNdvi)

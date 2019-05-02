@@ -22,6 +22,7 @@ mapRawTiles = function(images, gridFile) {
     dplyr::mutate(
       tile = list(grid$TILE[sf::st_intersects(grid, geometry[[1]], sparse = FALSE)])
     ) %>%
+    dplyr::ungroup() %>%
     tidyr::unnest(tile) %>%
     dplyr::inner_join(gridBbox)
   return(tiles)

@@ -27,6 +27,7 @@ groups = images %>%
   distinct()
 options(cores = nCores)
 tiles = foreach(dt = groups$date, bnd = groups$band, .combine = bind_rows) %dopar% {
+  cat(dt, bnd, '\n')
   tilesTmp = images %>%
     filter(date == dt & band == bnd) %>%
     mapRawTiles(gridFile) %>%

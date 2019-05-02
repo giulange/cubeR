@@ -25,6 +25,7 @@ toGo = images %>%
 while (nrow(toGo) > 0) {
   cat(sprintf('%d/%d (%d%%) %s\n', nrow(images) - nrow(toGo), nrow(images), as.integer(100 * (nrow(images) - nrow(toGo)) / nrow(images)), Sys.time()))
   results = foreach(url = toGo$url, file = toGo$file, .combine = c) %dopar% {
+    cat(file, '\n')
     try(sentinel2::S2_download(url, file, progressBar = FALSE, skipExisting = dwnldSkipExisting, timeout = dwnldTimeout, tries = dwnldTries, zip = FALSE), silent = TRUE)
   }
   toGo = toGo[!results, ]
