@@ -6,13 +6,20 @@ tilesDir = '/eodc/private/boku/ACube2/tiles'
 resamplingMethod = 'near'
 bands = c('B04', 'B08', 'SCL', 'LAI')
 nCores = 8
+
 dwnldNCores = 4
 dwnldTimeout = 120
 dwnldSkipExisting = 'samesize'
 dwnldTries = 2
+
 tilesSkipExisting = TRUE
+
 masksParam = list(
   list(bandName = 'CLOUDMASK1', minArea = 25L, bufferSize = 10L, invalidValues = c(0L:3L, 7L:11L), bufferedValues = c(3L, 8L:10L)),
   list(bandName = 'CLOUDMASK2', minArea = 0L, bufferSize = 0L, invalidValues = c(0L:3L, 7L:11L), bufferedValues = integer())
 )
 masksSkipExisting = TRUE
+
+ndviCloudmask = 'CLOUDMASK1'
+ndviBandName = 'NDVI'
+ndviSkipExisting = TRUE
