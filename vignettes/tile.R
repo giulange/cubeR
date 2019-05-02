@@ -5,16 +5,16 @@ if (length(args) < 6) {
 cat(c('Running tile.R', args, as.character(Sys.time()), '\n'))
 source(args[1])
 
-devtools::load_all(cubeRpath)
+devtools::load_all(cubeRpath, quiet = TRUE)
 library(sentinel2, quietly = TRUE)
-library(dplyr, quietly = TRUE)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(doParallel, quietly = TRUE)
 
 registerDoParallel()
 
 S2_initialize_user(args[2], args[3])
-projection = sf::st_crs(sf::st_read(gridFile))
-images = getImages(args[4], args[5], args[6], rawDir, projection, bands) %>%
+projection = sf::st_crs(sf::st_read(gridFile, quiet = TRUE))
+images = suppressMessages(getImages(args[4], args[5], args[6], rawDir, projection, bands)) %>%
   arrange(date, band)
 if (!all(file.exists(images$file))) {
   stop('raw file missing - run dwnld.R first')
@@ -28,10 +28,12 @@ groups = images %>%
 options(cores = nCores)
 tiles = foreach(dt = groups$date, bnd = groups$band, .combine = bind_rows) %dopar% {
   cat(dt, bnd, '\n')
-  tilesTmp = images %>%
-    filter(date == dt & band == bnd) %>%
-    mapRawTiles(gridFile) %>%
-    prepareTiles(tilesDir, gridFile, tmpDir, resamplingMethod, tilesSkipExisting)
+  tilesTmp = suppressMessages(
+    images %>%
+      filter(date == dt & band == bnd) %>%
+      mapRawTiles(gridFile) %>%
+      prepareTiles(tilesDir, gridFile, tmpDir, resamplingMethod, tilesSkipExisting)
+  )
   tilesTmp
 }
 cat(paste(nrow(tiles), 'tiles produced', Sys.time(), '\n'))

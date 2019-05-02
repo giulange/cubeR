@@ -5,17 +5,17 @@ if (length(args) < 6) {
 cat(c('Running masks.R', args, as.character(Sys.time()), '\n'))
 source(args[1])
 
-devtools::load_all(cubeRpath)
+devtools::load_all(cubeRpath, quiet = TRUE)
 library(sentinel2, quietly = TRUE)
-library(dplyr, quietly = TRUE)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(doParallel, quietly = TRUE)
 
 registerDoParallel()
 
 # get corresponding tiles
 S2_initialize_user(args[2], args[3])
-projection = sf::st_crs(sf::st_read(gridFile))
-tiles = getImages(args[4], args[5], args[6], rawDir, projection, 'SCL') %>%
+projection = sf::st_crs(sf::st_read(gridFile, quiet = TRUE))
+tiles = suppressMessages(getImages(args[4], args[5], args[6], rawDir, projection, 'SCL')) %>%
   mapRawTiles(gridFile) %>%
   select(date, band, tile) %>%
   distinct() %>%
@@ -32,7 +32,7 @@ masks = foreach(tls = tiles %>% group_by(tileFile) %>% group_split(), .combine =
   masksTmp = list()
   for (i in masksParam) {
     cat(tls$date, tls$tile, i$bandName, '\n')
-    masksTmp[[length(masksTmp) + 1]] = prepareMasks(tls, tilesDir, tmpDir, i$bandName, i$minArea, i$bufferSize, i$invalidValues, i$bufferedValues, masksSkipExisting)
+    masksTmp[[length(masksTmp) + 1]] = suppressMessages(prepareMasks(tls, tilesDir, tmpDir, i$bandName, i$minArea, i$bufferSize, i$invalidValues, i$bufferedValues, masksSkipExisting))
   }
   bind_rows(masksTmp)
 }

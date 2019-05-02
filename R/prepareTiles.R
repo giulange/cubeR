@@ -20,8 +20,8 @@ prepareTiles = function(rawTilesMap, targetDir, gridFile, tmpDir, method = 'bili
   if (!dir.exists(tmpDir)) {
     dir.create(tmpDir, recursive = TRUE)
   }
-  grid = sf::read_sf(gridFile)
-  prj = sf::st_crs(sf::st_read(gridFile))$proj4string
+  grid = sf::read_sf(gridFile, quiet = TRUE)
+  prj = sf::st_crs(grid)$proj4string
 
   noData = dplyr::tibble(
     band = c(sprintf('B%02d', 1:12), 'B8A', 'AOT', 'CLD', 'DEM', 'PVI', 'SCL', 'SNW', 'TCI', 'VIS', 'WVP', 'albedo', 'FAPAR', 'FCOVER', 'LAI'),

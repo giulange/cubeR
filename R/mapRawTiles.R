@@ -10,7 +10,7 @@
 #' @import dplyr
 #' @export
 mapRawTiles = function(images, gridFile) {
-  grid = sf::read_sf(gridFile)
+  grid = sf::read_sf(gridFile, quiet = TRUE)
   gridBbox = dplyr::data_frame(
     tile = grid$TILE,
     bbox = purrr::map(grid$geometry, sf::st_bbox)
