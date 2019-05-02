@@ -7,7 +7,7 @@ source(args[1])
 
 devtools::load_all(cubeRpath, quiet = TRUE)
 library(sentinel2, quietly = TRUE)
-library(dplyr, quietly = TRUE)
+library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(doParallel, quietly = TRUE)
 
 registerDoParallel()

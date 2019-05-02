@@ -8,20 +8,20 @@
 #' @return data frame describing matching S1 products
 #' @import dplyr
 #' @export
-getS1Products = function(roiId, dateMin, dateMax, dir, projection) {
-  if (!dir.exists(dir)) {
-    dir.create(dir, recursive = TRUE)
-  }
-
-  dirDict = c('desc', 'asc')
-  products = sentinel2:::S2_do_query(list(regionId = roiId, product = '%_GRD%', dateMin = dateMin, dateMax = dateMax), '/s1') %>%
-    dplyr::filter(!is.na(url)) %>%
-    dplyr::mutate(geometry = sentinel2:::geojson_to_geometry(geometry, 'sf')) %>%
-    dplyr::mutate(geometry = purrr::map(geometry, sf::st_transform, projection)) %>%
-    dplyr::group_by(date, asc) %>%
-    dplyr::mutate(
-      file = sprintf('%s/%s.zip', dir, product)
-    ) %>%
-    dplyr::ungroup()
-  return(products)
-}
+# getS1Products = function(roiId, dateMin, dateMax, dir, projection) {
+#   if (!dir.exists(dir)) {
+#     dir.create(dir, recursive = TRUE)
+#   }
+#
+#   dirDict = c('desc', 'asc')
+#   products = sentinel2:::S2_do_query(list(regionId = roiId, product = '%_GRD%', dateMin = dateMin, dateMax = dateMax), '/s1') %>%
+#     dplyr::filter(!is.na(url)) %>%
+#     dplyr::mutate(geometry = sentinel2::geojson_to_geometry(geometry, 'sf')) %>%
+#     dplyr::mutate(geometry = purrr::map(geometry, sf::st_transform, projection)) %>%
+#     dplyr::group_by(date, asc) %>%
+#     dplyr::mutate(
+#       file = sprintf('%s/%s.zip', dir, product)
+#     ) %>%
+#     dplyr::ungroup()
+#   return(products)
+# }

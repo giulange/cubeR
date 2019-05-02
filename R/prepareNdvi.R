@@ -12,18 +12,18 @@
 #' @export
 prepareNdvi = function(tiles, targetDir, cloudmaskBand = 'CLOUDMASK', bandName = 'NDVI', skipExisting = TRUE) {
   ndvi = tiles %>%
-    dplyr::select(date, tile, band, tileFile) %>%
-    dplyr::group_by(date, tile) %>%
-    dplyr::filter(band %in% c(cloudmaskBand, 'B04', 'B08')) %>%
-    dplyr::mutate(band = dplyr::if_else(band == cloudmaskBand, 'CLOUDMASK', band)) %>%
+    dplyr::select(.data$date, .data$tile, .data$band, .data$tileFile) %>%
+    dplyr::group_by(.data$date, .data$tile) %>%
+    dplyr::filter(.data$band %in% c(cloudmaskBand, 'B04', 'B08')) %>%
+    dplyr::mutate(band = dplyr::if_else(.data$band == cloudmaskBand, 'CLOUDMASK', .data$band)) %>%
     tidyr::spread('band', 'tileFile') %>%
     dplyr::mutate(
-      tileFile = getTilePath(targetDir, tile, date, bandName)
+      tileFile = getTilePath(targetDir, .data$tile, .data$date, bandName)
     ) %>%
     dplyr::mutate(
       command = sprintf(
         'gdal_calc.py -A "%s" -B "%s" -C "%s" --calc "10000 * (A.astype(float) - B) / (0.0000001 + A + B)" --outfile %s --overwrite --type Int16 --NoDataValue -32768 --co "COMPRESS=DEFLATE"',
-        B08, B04, CLOUDMASK, tileFile
+        .data$B08, .data$B04, .data$CLOUDMASK, .data$tileFile
       )
     )
 
@@ -32,18 +32,20 @@ prepareNdvi = function(tiles, targetDir, cloudmaskBand = 'CLOUDMASK', bandName =
     tmp = file.exists(ndvi$tileFile)
     skipped = ndvi %>%
       dplyr::filter(tmp) %>%
-      dplyr::mutate(band = ndviBandName) %>%
-      dplyr::select(date, tile, band, tileFile)
+      dplyr::mutate(band = bandName) %>%
+      dplyr::select(.data$date, .data$tile, .data$band, .data$tileFile)
     ndvi = ndvi %>%
       dplyr::filter(!tmp)
   }
 
-  ndvi = ndvi %>%
-    dplyr::group_by(date, tile) %>%
-    dplyr::do({
-      system(.$command, ignore.stdout = TRUE)
-      dplyr::tibble(band = bandName, tileFile = .$tileFile)
-    })
+  if (nrow(ndvi) > 0) {
+    ndvi = ndvi %>%
+      dplyr::group_by(.data$date, .data$tile) %>%
+      dplyr::do({
+        system(.data$command, ignore.stdout = TRUE)
+        data.frame(band = bandName, tileFile = .data$tileFile, stringsAsFactors = FALSE)
+      })
+  }
 
   return(bind_rows(skipped, ndvi))
 }

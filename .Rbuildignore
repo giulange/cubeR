@@ -1,2 +1,5 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^vignettes/.*R$
+^vignettes/.*RData$
+^vignettes/.*xml$

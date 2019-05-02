@@ -12,17 +12,17 @@
 #' @return data frame describing processing output
 #' @import dplyr
 #' @export
-applySnapWorkflow = function(products, workflowFile, gptPath, memoryLimit = '2G', threadsLimit = 8, tileCacheSize = '1G') {
-  products = products %>%
-    dplyr::mutate(
-      command = sprintf('%s %s -x -J-Xmx%s -q %d -c %s "-Pin=%s" "-Pout=%s"', gptPath, workflowFile, memoryLimit, threadsLimit, tileCacheSize, inFile, outFile)
-    )
-  products = products %>%
-    dplyr::group_by(inFile, outFile) %>%
-    do({
-      system(.$command, ignore.stdout = TRUE)
-      dplyr::tibble(success = TRUE)
-    }) %>%
-    dplyr::ungroup()
-  return(products)
-}
+# applySnapWorkflow = function(products, workflowFile, gptPath, memoryLimit = '2G', threadsLimit = 8, tileCacheSize = '1G') {
+#   products = products %>%
+#     dplyr::mutate(
+#       command = sprintf('%s %s -x -J-Xmx%s -q %d -c %s "-Pin=%s" "-Pout=%s"', gptPath, workflowFile, memoryLimit, threadsLimit, tileCacheSize, inFile, outFile)
+#     )
+#   products = products %>%
+#     dplyr::group_by(inFile, outFile) %>%
+#     do({
+#       system(.$command, ignore.stdout = TRUE)
+#       dplyr::tibble(success = TRUE)
+#     }) %>%
+#     dplyr::ungroup()
+#   return(products)
+# }

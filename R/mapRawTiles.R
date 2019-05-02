@@ -15,15 +15,15 @@ mapRawTiles = function(images, gridFile) {
     tile = grid$TILE,
     bbox = purrr::map(grid$geometry, sf::st_bbox)
   ) %>%
-    dplyr::mutate(bbox = purrr::map_chr(bbox, paste, collapse = ' '))
+    dplyr::mutate(bbox = purrr::map_chr(.data$bbox, paste, collapse = ' '))
 
   tiles = images %>%
-    dplyr::group_by(date, band, file) %>%
+    dplyr::group_by(.data$date, .data$band, .data$file) %>%
     dplyr::mutate(
-      tile = list(grid$TILE[sf::st_intersects(grid, geometry[[1]], sparse = FALSE)])
+      tile = list(grid$TILE[sf::st_intersects(grid, .data$geometry[[1]], sparse = FALSE)])
     ) %>%
     dplyr::ungroup() %>%
-    tidyr::unnest(tile) %>%
+    tidyr::unnest(.data$tile) %>%
     dplyr::inner_join(gridBbox)
   return(tiles)
 }

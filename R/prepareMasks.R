@@ -38,9 +38,9 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName = 'CLOUDMASK', minAre
   bufferedValues = as.integer(bufferedValues)
 
   masks = tiles %>%
-    dplyr::filter(band == 'SCL') %>%
-    dplyr::rename(file = tileFile) %>%
-    dplyr::mutate(tileFile = getTilePath(targetDir, tile, date, bandName))
+    dplyr::filter(.data$band == 'SCL') %>%
+    dplyr::rename(file = .data$tileFile) %>%
+    dplyr::mutate(tileFile = getTilePath(targetDir, .data$tile, .data$date, bandName))
   skipped = dplyr::tibble(file = character(), tileFile = character())
   if (skipExisting) {
     tmp = file.exists(masks$tileFile)
@@ -51,9 +51,9 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName = 'CLOUDMASK', minAre
   }
   if (nrow(masks) > 0L) {
     masks = masks %>%
-      dplyr::group_by(date, tile) %>%
+      dplyr::group_by(.data$date, .data$tile) %>%
       do({
-        mask = raster::raster(.$file)
+        mask = raster::raster(.data$file)
 
         if (minArea > 0L | bufferSize > 0L) {
           buffered = raster::getValues(mask)
@@ -74,9 +74,9 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName = 'CLOUDMASK', minAre
           # buffer with gdal_proximity cause it's 100 times faster then mmand::dilate() for large kernels
           tmp = raster::raster(mask)
           tmp = raster::setValues(tmp, as.vector(buffered))
-          tmpFileIn = paste0(tmpDir, '/', .$date, '_CLOUDS_', .$tile, '.tif')
+          tmpFileIn = paste0(tmpDir, '/', .data$date, '_CLOUDS_', .data$tile, '.tif')
           raster::writeRaster(tmp, tmpFileIn, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L)
-          tmpFileOut = paste0(tmpDir, '/', .$date, '_BUFFERED_', .$tile, '.tif')
+          tmpFileOut = paste0(tmpDir, '/', .data$date, '_BUFFERED_', .data$tile, '.tif')
           command = sprintf('gdal_proximity.py %s %s -ot Byte -maxdist 10 -distunits PIXEL -fixed-buf-val 1 -values 1 -nodata 2', tmpFileIn, tmpFileOut)
           system(command, ignore.stdout = TRUE)
           buffered = raster::getValues(raster::raster(tmpFileOut))
@@ -87,9 +87,9 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName = 'CLOUDMASK', minAre
         invalid = 255L * as.integer(invalid %in% invalidValues | is.na(invalid) | buffered < 2L)
 
         mask = raster::setValues(mask, invalid)
-        raster::writeRaster(mask, .$tileFile, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L, options = 'COMPRESS=DEFLATE')
+        raster::writeRaster(mask, .data$tileFile, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L, options = 'COMPRESS=DEFLATE')
 
-        dplyr::tibble(band = bandName, tileFile = .$tileFile)
+        data.frame(band = bandName, tileFile = .data$tileFile)
       }) %>%
       dplyr::ungroup()
   }
