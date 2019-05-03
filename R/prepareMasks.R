@@ -38,6 +38,7 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName = 'CLOUDMASK', minAre
   bufferedValues = as.integer(bufferedValues)
 
   masks = tiles %>%
+    dplyr::ungroup() %>%
     dplyr::filter(.data$band == 'SCL') %>%
     dplyr::rename(file = .data$tileFile) %>%
     dplyr::mutate(tileFile = getTilePath(targetDir, .data$tile, .data$date, bandName))
@@ -87,7 +88,9 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName = 'CLOUDMASK', minAre
         invalid = 255L * as.integer(invalid %in% invalidValues | is.na(invalid) | buffered < 2L)
 
         mask = raster::setValues(mask, invalid)
-        raster::writeRaster(mask, .data$tileFile, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L, options = 'COMPRESS=DEFLATE')
+        tmpFile = paste0(tmpDir, basename(.data$tileFile))
+        raster::writeRaster(mask, tmpFile, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L, options = 'COMPRESS=DEFLATE')
+        file.rename(tmpFile, .data$tileFile)
 
         data.frame(band = bandName, tileFile = .data$tileFile)
       }) %>%

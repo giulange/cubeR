@@ -18,13 +18,15 @@ if (!all(file.exists(tiles$tileFile))) {
   stop('missing tiles - run tile.R first')
 }
 
-cat(paste('Preparing', nrow(tiles) * length(masksParam), 'masks', Sys.time(), '\n'))
+cat(paste('Preparing', nrow(tiles) * length(maskParam), 'masks', Sys.time(), '\n'))
 options(cores = nCores)
-masks = foreach(tls = tiles %>% group_by(tileFile) %>% group_split(), .combine = bind_rows) %dopar% {
+masks = foreach(tls = assignToCores(tiles, maskNCores, chunksPerCore), .combine = bind_rows) %dopar% {
   masksTmp = list()
-  for (i in masksParam) {
-    cat(tls$date, tls$tile, i$bandName, '\n')
-    masksTmp[[length(masksTmp) + 1]] = suppressMessages(prepareMasks(tls, tilesDir, tmpDir, i$bandName, i$minArea, i$bufferSize, i$invalidValues, i$bufferedValues, masksSkipExisting))
+  for (i in maskParam) {
+    tmp = tls %>% select(date, tile) %>% distinct()
+    cat(i$bandName, ' ', paste(tmp$date, tmp$tile, collapse = ', '), ' (', nrow(tls), ')\n', sep = '')
+
+    masksTmp[[length(masksTmp) + 1]] = suppressMessages(prepareMasks(tls, tilesDir, tmpDir, i$bandName, i$minArea, i$bufferSize, i$invalidValues, i$bufferedValues, maskSkipExisting))
   }
   bind_rows(masksTmp)
 }

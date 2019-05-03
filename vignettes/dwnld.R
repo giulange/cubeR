@@ -24,11 +24,8 @@ toGo = images %>%
     select(url, file)
 while (nrow(toGo) > 0) {
   cat(sprintf('%d/%d (%d%%) %s\n', nrow(images) - nrow(toGo), nrow(images), as.integer(100 * (nrow(images) - nrow(toGo)) / nrow(images)), Sys.time()))
-  toGo = toGo %>%
-    mutate(core = rep_len(1:(dwnldNCores * 10), nrow(.))) %>%
-    group_by(core)
-  results = foreach(tg = toGo %>% group_split(), .combine = c) %dopar% {
-    cat(tg$file[1], '\n')
+  results = foreach(tg = assignToCores(toGo, dwnldNCores, chunksPerCore), .combine = c) %dopar% {
+    cat(tg$file[1], nrow(tg), '\n')
     try(sentinel2::S2_download(tg$url, tg$file, progressBar = FALSE, skipExisting = dwnldSkipExisting, timeout = dwnldTimeout, tries = dwnldTries, zip = FALSE), silent = TRUE)
   }
   toGo = toGo[!results, ]

@@ -26,14 +26,14 @@ groups = images %>%
   arrange(desc(date), band) %>%
   distinct()
 options(cores = nCores)
-tiles = foreach(dt = groups$date, bnd = groups$band, .combine = bind_rows) %dopar% {
-  cat(dt, bnd, '\n')
-  tilesTmp = suppressMessages(
-    images %>%
-      filter(date == dt & band == bnd) %>%
+tiles = foreach(imgs = assignToCores(images, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
+  tmp = imgs %>% select(date, band) %>% distinct()
+  cat(paste(tmp$date, tmp$band, collapse = ', '), ' (', nrow(imgs), ')\n', sep = '')
+
+  suppressMessages(
+    imgs %>%
       mapRawTiles(gridFile) %>%
       prepareTiles(tilesDir, gridFile, tmpDir, resamplingMethod, tilesSkipExisting)
   )
-  tilesTmp
 }
 cat(paste(nrow(tiles), 'tiles produced', Sys.time(), '\n'))
