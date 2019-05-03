@@ -19,7 +19,7 @@ if (!all(file.exists(tiles$tileFile))) {
 }
 
 cat(paste('Preparing', nrow(tiles) * length(maskParam), 'masks', Sys.time(), '\n'))
-options(cores = nCores)
+options(cores = maskNCores)
 masks = foreach(tls = assignToCores(tiles, maskNCores, chunksPerCore), .combine = bind_rows) %dopar% {
   masksTmp = list()
   for (i in maskParam) {
