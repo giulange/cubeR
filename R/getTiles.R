@@ -21,6 +21,6 @@ getTiles = function(gridFile, roi, dateFrom, dateTo, bands, user, pswd, tilesDir
     dplyr::inner_join(dplyr::tibble(x = 1, band = bands)) %>%
     dplyr::select(-.data$x) %>%
     dplyr::mutate(tileFile = getTilePath(tilesDir, .data$tile, .data$date, .data$band)) %>%
-    dplyr::arrange(.data$date, .data$band, .data$tile)
+    dplyr::arrange(desc(.data$date), .data$band, .data$tile)
   return(tiles)
 }
