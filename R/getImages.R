@@ -18,13 +18,17 @@ getImages = function(roiId, dateMin, dateMax, dir, projection, bands, ...) {
     dplyr::mutate(geometry = purrr::map(.data$geometry, sf::st_transform, projection))
   imgs = dplyr::as.tbl(sentinel2::S2_query_image(regionId = roiId, dateMin = dateMin, dateMax = dateMax, atmCorr = TRUE, owned = TRUE, ...))
   imgs = imgs %>%
+    dplyr::rename(dateFull = .data$date) %>%
+    dplyr::mutate(date = substr(.data$dateFull, 1, 10)) %>%
     dplyr::group_by(.data$granuleId, .data$band) %>%
     dplyr::filter(.data$band %in% bands & .data$resolution == min(.data$resolution)) %>%
     dplyr::group_by(.data$granuleId) %>%
     dplyr::filter(n() == length(bands)) %>%
+    dplyr::group_by(.data$date, .data$utm, .data$band) %>%
+    dplyr::filter(.data$dateFull == max(.data$dateFull)) %>%
+    dplyr::select(-.data$dateFull) %>%
     dplyr::ungroup() %>%
     dplyr::inner_join(granules) %>%
-    dplyr::mutate(date = substr(.data$date, 1, 10)) %>%
     dplyr::mutate(file = sprintf('%s/%s/%s_%s_%s.tif', dir, .data$utm, .data$date, .data$band, .data$utm))
 
   for (i in unique(dirname(imgs$file))) {

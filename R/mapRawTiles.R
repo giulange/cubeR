@@ -11,18 +11,19 @@
 #' @export
 mapRawTiles = function(images, gridFile) {
   grid = sf::read_sf(gridFile, quiet = TRUE)
-  gridBbox = dplyr::data_frame(
+  gridBbox = dplyr::tibble(
     tile = grid$TILE,
     bbox = purrr::map(grid$geometry, sf::st_bbox)
   ) %>%
     dplyr::mutate(bbox = purrr::map_chr(.data$bbox, paste, collapse = ' '))
 
   tiles = images %>%
-    dplyr::group_by(.data$date, .data$band, .data$file) %>%
-    dplyr::mutate(
-      tile = list(grid$TILE[sf::st_intersects(grid, .data$geometry[[1]], sparse = FALSE)])
-    ) %>%
     dplyr::ungroup() %>%
+    dplyr::mutate(
+      tile = purrr::map(.data$geometry, function(x){
+        grid$TILE[sf::st_intersects(grid, x, sparse = FALSE)]
+      })
+    ) %>%
     tidyr::unnest(.data$tile) %>%
     dplyr::inner_join(gridBbox)
   return(tiles)

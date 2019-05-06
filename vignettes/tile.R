@@ -25,12 +25,12 @@ if (!all(file.exists(unique(images$file)))) {
   stop('raw file missing - run dwnld.R first')
 }
 
-cat(paste('Tiling', n_distinct(images$file), 'images into', n_groups(images), 'tiles', Sys.time(), '\n'))
+cat(paste('Tiling', n_distinct(images$file), 'images into', n_distinct(images$date, images$band, images$tile), 'tiles', Sys.time(), '\n'))
 options(cores = nCores)
 tiles = foreach(imgs = assignToCores(images, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
   imgs = imgs %>% ungroup()
   tmp = imgs %>% select(date, band) %>% distinct()
-  cat(paste(tmp$date, tmp$band, collapse = ', '), ' (', nrow(imgs), ', ', n_distinct(imgs$date, imgs$band, imgs$tile), ')\n', sep = '')
+  cat(paste(tmp$date, tmp$band, collapse = ', '), ' (', nrow(imgs), 'i, ', n_distinct(imgs$date, imgs$band, imgs$tile), 't)\n', sep = '')
 
   suppressMessages(prepareTiles(imgs, tilesDir, gridFile, tmpDir, resamplingMethod, tilesSkipExisting))
 }
