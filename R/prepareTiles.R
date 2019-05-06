@@ -29,6 +29,9 @@ prepareTiles = function(rawTilesMap, targetDir, gridFile, tmpDir, method, skipEx
     nodata = c(rep(0, 22), 65535, rep(32767, 3))
   )
 
+  rawTilesMap = rawTilesMap %>%
+    dplyr::ungroup()
+
   # generate output file names
   rawTilesMap = rawTilesMap %>%
     dplyr::mutate(
