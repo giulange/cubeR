@@ -19,7 +19,7 @@ prepareNdvi = function(tiles, targetDir, tmpDir, cloudmaskBand = 'CLOUDMASK', ba
     dplyr::group_by(.data$date, .data$tile) %>%
     dplyr::filter(.data$band %in% c(cloudmaskBand, 'B04', 'B08')) %>%
     dplyr::mutate(band = dplyr::if_else(.data$band == cloudmaskBand, 'CLOUDMASK', .data$band)) %>%
-    tidyr::spread('band', 'tileFile') %>%
+    tidyr::spread(.data$band, .data$tileFile) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(
       tileFile = getTilePath(targetDir, .data$tile, .data$date, bandName)

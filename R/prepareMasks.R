@@ -42,6 +42,7 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName, minArea, bufferSize,
     dplyr::filter(.data$band == 'SCL') %>%
     dplyr::rename(file = .data$tileFile) %>%
     dplyr::mutate(tileFile = getTilePath(targetDir, .data$tile, .data$date, bandName))
+
   skipped = dplyr::tibble(file = character(), tileFile = character())
   if (skipExisting) {
     tmp = file.exists(masks$tileFile)
@@ -50,6 +51,7 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName, minArea, bufferSize,
     masks = masks %>%
       dplyr::filter(!tmp)
   }
+
   if (nrow(masks) > 0L) {
     masks = masks %>%
       dplyr::group_by(.data$date, .data$tile) %>%

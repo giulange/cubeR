@@ -24,7 +24,7 @@ getImages = function(roiId, dateMin, dateMax, dir, projection, bands, ...) {
     dplyr::filter(.data$band %in% bands & .data$resolution == min(.data$resolution)) %>%
     dplyr::group_by(.data$granuleId) %>%
     dplyr::filter(n() == length(bands)) %>%
-    dplyr::group_by(.data$date, .data$utm, .data$band) %>%
+    dplyr::group_by(.data$date, .data$utm, .data$band) %>% # same S2 acquisition (date x utm) can be received by two ground stations resulting in two granules (sic!)
     dplyr::filter(.data$dateFull == max(.data$dateFull)) %>%
     dplyr::select(-.data$dateFull) %>%
     dplyr::ungroup() %>%

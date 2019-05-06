@@ -28,3 +28,4 @@ ndviBandName = 'NDVI'
 ndviSkipExisting = TRUE
 
 whichBands = 'NDVI'
+whichSkipExisting = TRUE

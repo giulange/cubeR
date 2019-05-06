@@ -2,6 +2,7 @@ args = commandArgs(TRUE)
 if (length(args) < 6) {
   stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo')
 }
+names(args) = c('cfgFile', 'user', 'pswd', 'region', 'from', 'to')
 cat(c('Running masks.R', args, as.character(Sys.time()), '\n'))
 source(args[1])
 
@@ -13,7 +14,7 @@ library(doParallel, quietly = TRUE)
 registerDoParallel()
 
 # get corresponding tiles
-tiles = suppressMessages(getTiles(gridFile, args[4], args[5], args[6], 'SCL', args[2], args[3], tilesDir))
+tiles = suppressMessages(getTiles(gridFile, args['region'], args['from'], args['to'], 'SCL', args['user'], args['pswd'], tilesDir))
 if (!all(file.exists(tiles$tileFile))) {
   stop('missing tiles - run tile.R first')
 }

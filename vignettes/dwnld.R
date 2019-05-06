@@ -2,6 +2,7 @@ args = commandArgs(TRUE)
 if (length(args) < 6) {
   stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo')
 }
+names(args) = c('cfgFile', 'user', 'pswd', 'region', 'from', 'to')
 cat(c('Running dwnld.R', args, as.character(Sys.time()), '\n'))
 source(args[1])
 
@@ -12,10 +13,10 @@ library(doParallel, quietly = TRUE)
 
 registerDoParallel()
 
-S2_initialize_user(args[2], args[3])
+S2_initialize_user(args['user'], args['pswd'])
 projection = sf::st_crs(sf::st_read(gridFile, quiet = TRUE))
 
-images = suppressMessages(getImages(args[4], args[5], args[6], rawDir, projection, bands)) %>%
+images = suppressMessages(getImages(args['region'], args['from'], args['to'], rawDir, projection, bands)) %>%
   arrange(date, band)
 cat('Downloading\n')
 options(cores = dwnldNCores)

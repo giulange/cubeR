@@ -2,6 +2,7 @@ args = commandArgs(TRUE)
 if (length(args) < 6) {
   stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo')
 }
+names(args) = c('cfgFile', 'user', 'pswd', 'region', 'from', 'to')
 cat(c('Running ndvi.R', args, as.character(Sys.time()), '\n'))
 source(args[1])
 
@@ -11,7 +12,7 @@ library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(doParallel, quietly = TRUE)
 registerDoParallel()
 
-tiles = suppressMessages(getTiles(gridFile, args[4], args[5], args[6], c(ndviCloudmask, 'B04', 'B08'), args[2], args[3], tilesDir)) %>%
+tiles = suppressMessages(getTiles(gridFile, args['region'], args['from'], args['to'], c(ndviCloudmask, 'B04', 'B08'), args['user'], args['pswd'], tilesDir)) %>%
   group_by(date, tile)
 if (!all(file.exists(tiles$tileFile))) {
   stop('missing tiles - run tile.R and/or mask.R first')
