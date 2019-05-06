@@ -14,6 +14,7 @@ dwnldSkipExisting = 'samesize'
 dwnldTries = 2
 
 tilesSkipExisting = TRUE
+tileResamplingMethod = 'near'
 tileGdalOpts = '-multi -wo NUM_THREADS=2'
 
 maskParam = list(

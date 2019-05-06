@@ -33,6 +33,6 @@ tiles = foreach(imgs = assignToCores(images, nCores, chunksPerCore), .combine = 
   tmp = imgs %>% select(date, band) %>% distinct()
   cat(paste(tmp$date, tmp$band, collapse = ', '), ' (', nrow(imgs), 'i, ', n_distinct(imgs$date, imgs$band, imgs$tile), 't)\n', sep = '')
 
-  suppressMessages(prepareTiles(imgs, tilesDir, gridFile, tmpDir, resamplingMethod, tilesSkipExisting))
+  suppressMessages(prepareTiles(imgs, tilesDir, gridFile, tmpDir, tileResamplingMethod, tilesSkipExisting))
 }
 cat(paste(nrow(tiles), 'tiles produced', Sys.time(), '\n'))
