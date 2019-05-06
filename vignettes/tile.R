@@ -15,6 +15,7 @@ registerDoParallel()
 S2_initialize_user(args[2], args[3])
 projection = sf::st_crs(sf::st_read(gridFile, quiet = TRUE))
 images = suppressMessages(getImages(args[4], args[5], args[6], rawDir, projection, bands)) %>%
+  select(band, date, utm, file, geometry) %>%
   mapRawTiles(gridFile) %>%
   arrange(desc(date), band, tile) %>%
   group_by(date, band, tile)  # crucial for assignToCores()
