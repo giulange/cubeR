@@ -18,8 +18,8 @@ images = suppressMessages(
   getImages(args[4], args[5], args[6], rawDir, projection, bands) %>%
     select(band, date, utm, file, geometry) %>%
     mapRawTiles(gridFile) %>%
-    arrange(desc(date), band, tile) %>%
-    group_by(date, band, tile)  # crucial for assignToCores()
+    arrange(desc(date), band) %>%
+    group_by(date, band)  # `tile` not included to avoid problems when same image is used by two tiles being simultanously processed on other workers
 )
 if (!all(file.exists(unique(images$file)))) {
   stop('raw file missing - run dwnld.R first')
@@ -30,7 +30,7 @@ options(cores = nCores)
 tiles = foreach(imgs = assignToCores(images, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
   imgs = imgs %>% ungroup()
   tmp = imgs %>% select(date, band) %>% distinct()
-  cat(paste(tmp$date, tmp$band, collapse = ', '), ' (', nrow(imgs), ', ', n_groups(imgs), ')\n', sep = '')
+  cat(paste(tmp$date, tmp$band, collapse = ', '), ' (', nrow(imgs), ', ', n_distinct(imgs$date, imgs$band, imgs$tile), ')\n', sep = '')
 
   suppressMessages(prepareTiles(imgs, tilesDir, gridFile, tmpDir, resamplingMethod, tilesSkipExisting))
 }
