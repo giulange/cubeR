@@ -1,4 +1,6 @@
 #' Computes NDVI tiles
+#' @details
+#' Computation is done using gdal_calc.py.
 #' @param tiles a data frame describing tiles obtained by row-binding data
 #'   returned by the \code{\link{prepareTiles}} and \code{\link{prepareMasks}}
 #'   functions
@@ -27,7 +29,7 @@ prepareNdvi = function(tiles, targetDir, tmpDir, cloudmaskBand = 'CLOUDMASK', ba
     ) %>%
     dplyr::mutate(
       command = sprintf(
-        'gdal_calc.py -A "%s" -B "%s" -C "%s" --calc "10000 * (A.astype(float) - B) / (0.0000001 + A + B)" --outfile %s --overwrite --type Int16 --NoDataValue -32768 --co "COMPRESS=DEFLATE" && mv %s %s',
+        'gdal_calc.py --quiet -A "%s" -B "%s" -C "%s" --calc "10000 * (A.astype(float) - B) / (0.0000001 + A + B)" --outfile %s --overwrite --type Int16 --NoDataValue -32768 --co "COMPRESS=DEFLATE" && mv %s %s',
         .data$B08, .data$B04, .data$CLOUDMASK, .data$tmpFile, .data$tmpFile, .data$tileFile
       )
     )
@@ -49,7 +51,8 @@ prepareNdvi = function(tiles, targetDir, tmpDir, cloudmaskBand = 'CLOUDMASK', ba
       dplyr::do({
         system(.data$command, ignore.stdout = TRUE)
         data.frame(band = bandName, tileFile = .data$tileFile, stringsAsFactors = FALSE)
-      })
+      }) %>%
+      dplyr::ungroup()
   }
 
   return(bind_rows(skipped, ndvi))

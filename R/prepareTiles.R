@@ -12,10 +12,11 @@
 #' @param method resampling method (near, bilinear, cubic, cubicspline, lanczos,
 #'   average, mode, max, min, med, q1, q3 - see gdalwarp doc)
 #' @param skipExisting should already existing tiles be skipped?
+#' @param gdalOpts additional gdalwarp options, e.g. enabling multithreading
 #' @return data frame describing created tiles
 #' @import dplyr
 #' @export
-prepareTiles = function(rawTilesMap, targetDir, gridFile, tmpDir, method = 'bilinear', skipExisting = TRUE) {
+prepareTiles = function(rawTilesMap, targetDir, gridFile, tmpDir, method, skipExisting = TRUE, gdalOpts = '') {
   options(scipen = 100)
   if (!dir.exists(tmpDir)) {
     dir.create(tmpDir, recursive = TRUE)
@@ -69,7 +70,7 @@ prepareTiles = function(rawTilesMap, targetDir, gridFile, tmpDir, method = 'bili
       equi7File = path.expand(paste0(tmpDir, '/', basename(.data$file)))
     ) %>%
     dplyr::mutate(
-      command = paste('gdalwarp -overwrite -tr 10.0 10.0 -r ', dplyr::if_else(.data$band %in% 'SCL', 'near', method), ' -srcnodata', .data$nodata, '-t_srs', paste0('"', prj, '"'), paste0('"', path.expand(.data$file), '"'), paste0('"', .data$equi7File, '"'))
+      command = paste('gdalwarp ', gdalOpts, ' -q -overwrite -tr 10.0 10.0 -r ', dplyr::if_else(.data$band %in% 'SCL', 'near', method), ' -srcnodata', .data$nodata, '-t_srs', paste0('"', prj, '"'), paste0('"', path.expand(.data$file), '"'), paste0('"', .data$equi7File, '"'))
     )
   imgs = imgs %>%
     dplyr::group_by(.data$date, .data$band, .data$utm, .data$file, .data$equi7File) %>%
@@ -95,7 +96,7 @@ prepareTiles = function(rawTilesMap, targetDir, gridFile, tmpDir, method = 'bili
     dplyr::mutate(
       tileFileTmp = paste0(tmpDir, '/', basename(.data$tileFile))
     ) %>%
-    dplyr::mutate(command = paste('gdalwarp -overwrite -co "COMPRESS=DEFLATE" -te', .data$bbox, .data$inputFiles, .data$tileFileTmp, '&& mv', .data$tileFileTmp, .data$tileFile)) %>%
+    dplyr::mutate(command = paste('gdalwarp ', gdalOpts, ' -q -overwrite -co "COMPRESS=DEFLATE" -te', .data$bbox, .data$inputFiles, .data$tileFileTmp, '&& mv', .data$tileFileTmp, .data$tileFile)) %>%
     dplyr::select(-.data$inputFiles, -.data$bbox)
 
   tiles = tiles %>%
@@ -104,7 +105,8 @@ prepareTiles = function(rawTilesMap, targetDir, gridFile, tmpDir, method = 'bili
       system(.data$command, ignore.stdout = TRUE)
       dplyr::tibble(success = TRUE)
     }) %>%
-    dplyr::select(-.data$success)
+    dplyr::select(-.data$success) %>%
+    dplyr::ungroup()
 
   return(bind_rows(skipped, tiles))
 }

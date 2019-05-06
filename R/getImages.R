@@ -12,7 +12,7 @@
 #' @return data frame describing matching images
 #' @import dplyr
 #' @export
-getImages = function(roiId, dateMin, dateMax, dir, projection, bands = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'TCI', 'LAI', 'FAPAR', 'FCOVER', 'SCL'), ...) {
+getImages = function(roiId, dateMin, dateMax, dir, projection, bands, ...) {
   granules = sentinel2::S2_query_granule(regionId = roiId, dateMin = dateMin, dateMax = dateMax, atmCorr = TRUE, owned = TRUE, spatial = 'sf') %>%
     dplyr::select(.data$granuleId, .data$geometry) %>%
     dplyr::mutate(geometry = purrr::map(.data$geometry, sf::st_transform, projection))

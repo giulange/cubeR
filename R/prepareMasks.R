@@ -30,7 +30,7 @@
 #' @return data frame describing created masks
 #' @import dplyr
 #' @export
-prepareMasks = function(tiles, targetDir, tmpDir, bandName = 'CLOUDMASK', minArea = 25L, bufferSize = 10L, invalidValues = c(0L:3L, 7L:11L), bufferedValues = c(3L, 8L:10L), skipExisting = TRUE) {
+prepareMasks = function(tiles, targetDir, tmpDir, bandName, minArea, bufferSize, invalidValues, bufferedValues, skipExisting = TRUE) {
   # integer arithmetic is much faster
   minArea = as.integer(minArea)
   bufferSize = as.integer(bufferSize)
@@ -78,7 +78,7 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName = 'CLOUDMASK', minAre
           tmpFileIn = paste0(tmpDir, '/', .data$date, '_CLOUDS_', .data$tile, '.tif')
           raster::writeRaster(tmp, tmpFileIn, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L)
           tmpFileOut = paste0(tmpDir, '/', .data$date, '_BUFFERED_', .data$tile, '.tif')
-          command = sprintf('gdal_proximity.py %s %s -ot Byte -maxdist 10 -distunits PIXEL -fixed-buf-val 1 -values 1 -nodata 2', tmpFileIn, tmpFileOut)
+          command = sprintf('gdal_proximity.py -q %s %s -ot Byte -maxdist 10 -distunits PIXEL -fixed-buf-val 1 -values 1 -nodata 2', tmpFileIn, tmpFileOut)
           system(command, ignore.stdout = TRUE)
           buffered = raster::getValues(raster::raster(tmpFileOut))
           unlink(c(tmpFileIn, tmpFileOut))

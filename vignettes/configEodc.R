@@ -14,6 +14,7 @@ dwnldSkipExisting = 'samesize'
 dwnldTries = 2
 
 tilesSkipExisting = TRUE
+tileGdalOpts = '-multi -wo NUM_THREADS=2'
 
 maskParam = list(
   list(bandName = 'CLOUDMASK1', minArea = 25L, bufferSize = 10L, invalidValues = c(0L:3L, 7L:11L), bufferedValues = c(3L, 8L:10L)),
@@ -25,3 +26,5 @@ maskNCores = 4
 ndviCloudmask = 'CLOUDMASK1'
 ndviBandName = 'NDVI'
 ndviSkipExisting = TRUE
+
+whichBands = 'NDVI'

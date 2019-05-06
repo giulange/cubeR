@@ -15,25 +15,19 @@ registerDoParallel()
 S2_initialize_user(args[2], args[3])
 projection = sf::st_crs(sf::st_read(gridFile, quiet = TRUE))
 images = suppressMessages(getImages(args[4], args[5], args[6], rawDir, projection, bands)) %>%
-  arrange(date, band)
-if (!all(file.exists(images$file))) {
+  mapRawTiles(gridFile) %>%
+  arrange(desc(date), band, tile) %>%
+  group_by(date, band, tile)  # crucial for assignToCores()
+if (!all(file.exists(unique(images$file)))) {
   stop('raw file missing - run dwnld.R first')
 }
 
-cat(paste('Tiling', nrow(images), 'images', Sys.time(), '\n'))
-groups = images %>%
-  select(date, band) %>%
-  arrange(desc(date), band) %>%
-  distinct()
+cat(paste('Tiling', n_distinct(images$file), 'images into', n_groups(images), 'tiles', Sys.time(), '\n'))
 options(cores = nCores)
 tiles = foreach(imgs = assignToCores(images, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
   tmp = imgs %>% select(date, band) %>% distinct()
-  cat(paste(tmp$date, tmp$band, collapse = ', '), ' (', nrow(imgs), ')\n', sep = '')
+  cat(paste(tmp$date, tmp$band, collapse = ', '), ' (', nrow(imgs), ', ', n_groups(imgs), ')\n', sep = '')
 
-  suppressMessages(
-    imgs %>%
-      mapRawTiles(gridFile) %>%
-      prepareTiles(tilesDir, gridFile, tmpDir, resamplingMethod, tilesSkipExisting)
-  )
+  suppressMessages(prepareTiles(imgs, tilesDir, gridFile, tmpDir, resamplingMethod, tilesSkipExisting))
 }
 cat(paste(nrow(tiles), 'tiles produced', Sys.time(), '\n'))
