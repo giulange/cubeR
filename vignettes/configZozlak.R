@@ -27,5 +27,8 @@ ndviCloudmask = 'CLOUDMASK1'
 ndviBandName = 'NDVI'
 ndviSkipExisting = TRUE
 
-whichBands = 'NDVI'
+whichBands = c('NDVI')
 whichSkipExisting = TRUE
+
+compositeBands = c('NDVI', 'LAI')
+compositeSkipExisting = TRUE

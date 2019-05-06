@@ -29,3 +29,6 @@ ndviSkipExisting = TRUE
 
 whichBands = 'NDVI'
 whichSkipExisting = TRUE
+
+compositeBands = c('NDVI', 'LAI')
+compositeSkipExisting = TRUE

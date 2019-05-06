@@ -9,7 +9,7 @@
 #' Processing is done within groups defined by \code{period & band}
 #'
 #' Processing is divided into two steps. \enumerate{ \item In the first step a
-#' maximum value among all dates in a period is computed. \iten In the second
+#' maximum value among all dates in a period is computed. \item In the second
 #' step an output band is computed by comparing values at particular dates to
 #' the maximum one. If the maximum value occurs for many dates, the last date is
 #' taken. }
