@@ -96,7 +96,7 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName, minArea, bufferSize,
         createDirs(.data$tileFile)
         file.rename(tmpFile, .data$tileFile)
 
-        data.frame(band = bandName, tileFile = .data$tileFile)
+        data.frame(band = bandName, tileFile = .data$tileFile, stringsAsFactors = FALSE)
       }) %>%
       dplyr::ungroup()
   }

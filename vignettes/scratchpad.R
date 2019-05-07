@@ -5,7 +5,7 @@ library(dplyr)
 packageDir = '~/roboty/BOKU/cube/cubeR'
 cfgFile = "~/roboty/BOKU/cube/cubeR/vignettes/configZozlak.R"
 s2user = "zozlak"
-s2pswd = "alamakota"
+s2pswd = "xxx"
 s2roi = "AU_cube"
 dateStart = "2018-05-01"
 dateEnd = "2018-05-31"

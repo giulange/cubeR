@@ -4,9 +4,9 @@ cubeRpath = '/eodc/private/boku/software/cubeR'
 gridFile = '/eodc/private/boku/ACube/shapefiles/EQUI7_V13_EU_PROJ_TILE_T1.shp'
 # directory for storing temporary files
 tmpDir = '/eodc/private/boku/ACube2/tmp'
-# directory storing raw S2 images
+# directory storing rasters before retiling
 rawDir = '/eodc/private/boku/ACube2/raw'
-# directory storing target grid images
+# directory storing rasters after retiling to the target grid (see the gridFile parameter)
 tilesDir = '/eodc/private/boku/ACube2/tiles'
 
 # list of bands to be downloaded and tiled
@@ -37,8 +37,8 @@ maskParam = list(
 )
 # should already existing masks be skipped (TRUE) or reprocessed anyway (FALSE)
 maskSkipExisting = TRUE
-# number of cloud masks generated in parallel (each parallel task requires ~6 GB of RAM)
-maskNCores = 4
+# number of cloud masks generated in parallel (each parallel task requires ~3 GB of RAM)
+maskNCores = 8
 
 # name of the cloud mask to be used for the NDVI generation
 ndviCloudmask = 'CLOUDMASK1'
