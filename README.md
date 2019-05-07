@@ -3,10 +3,10 @@
 A package automating Landsupport data processing:
 
 * S2 images download (from the s2.boku.eodc.eu) (`vignettes/dwnld.R`)
-* reprojecting and retiling (`vignettes/tile.R` / `prepareTiles()`)
 * cloud mask generation (`vignettes/mask.R` / `prepareMasks()`)
 * NDVI computation (`vignettes/ndvi.R` / `prepareNdvi()`)
 * computing composites (`vignettes/which.R` & `vignettes/composite.R` / `prepareWhich()` & `prepareComposites()`)
+* reprojecting and retiling (`vignettes/tile.R` / `prepareTiles()`)
 
 ## Installation
 

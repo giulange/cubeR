@@ -14,9 +14,10 @@ library(doParallel, quietly = TRUE)
 registerDoParallel()
 
 # get corresponding tiles
-tiles = suppressMessages(getTiles(gridFile, args['region'], args['from'], args['to'], 'SCL', args['user'], args['pswd'], tilesDir))
+tiles = suppressMessages(getImages(args['region'], args['from'], args['to'], rawDir, gridFile, 'SCL', args['user'], args['pswd'])) %>%
+  imagesToTiles()
 if (!all(file.exists(tiles$tileFile))) {
-  stop('missing tiles - run tile.R first')
+  stop('missing tiles - run dwnld.R first')
 }
 
 cat(paste('Preparing', nrow(tiles) * length(maskParam), 'masks', Sys.time(), '\n'))

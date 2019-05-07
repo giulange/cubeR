@@ -90,8 +90,10 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName, minArea, bufferSize,
         invalid = 255L * as.integer(invalid %in% invalidValues | is.na(invalid) | buffered < 2L)
 
         mask = raster::setValues(mask, invalid)
-        tmpFile = paste0(tmpDir, basename(.data$tileFile))
+        tmpFile = paste0(tmpDir, '/', basename(.data$tileFile))
         raster::writeRaster(mask, tmpFile, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L, options = 'COMPRESS=DEFLATE')
+
+        createDirs(.data$tileFile)
         file.rename(tmpFile, .data$tileFile)
 
         data.frame(band = bandName, tileFile = .data$tileFile)

@@ -12,8 +12,6 @@ dateEnd = "2018-05-31"
 
 # download
 system(paste('Rscript', paste0(packageDir, '/vignettes/dwnld.R'), cfgFile, s2user, s2pswd, s2roi, dateStart, dateEnd))
-# reproject & retile
-system(paste('Rscript', paste0(packageDir, '/vignettes/tile.R'), cfgFile, s2user, s2pswd, s2roi, dateStart, dateEnd))
 # prepare cloud masks
 system(paste('Rscript', paste0(packageDir, '/vignettes/mask.R'), cfgFile, s2user, s2pswd, s2roi, dateStart, dateEnd))
 # compute NDVI
@@ -25,3 +23,5 @@ system(paste('Rscript', paste0(packageDir, '/vignettes/which.R'), cfgFile, s2use
 period = '1 month'
 maxNdviBand = 'NMAXNDVI'
 system(paste('Rscript', paste0(packageDir, '/vignettes/composite.R'), cfgFile, s2user, s2pswd, s2roi, dateStart, dateEnd, shQuote(period), maxNdviBand))
+# reproject & retile
+system(paste('Rscript', paste0(packageDir, '/vignettes/tile.R'), cfgFile, s2user, s2pswd, s2roi, dateStart, dateEnd))
