@@ -9,7 +9,7 @@
 #' @import dplyr
 preprocessNodata = function(files, targetDir, prefix = 'nodata_') {
   nodataFiles = paste0(targetDir, '/', prefix, basename(files), '.vrt')
-  command = paste0('gdal_translate -a_nodata none "', files, '" "', nodataFiles, '"')
+  command = paste0('gdal_translate -a_nodata none -of vrt "', files, '" "', nodataFiles, '"')
   for (i in command) {
     system(i, ignore.stdout = TRUE)
   }
