@@ -12,10 +12,13 @@ library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(doParallel, quietly = TRUE)
 registerDoParallel()
 
-tiles = suppressMessages(getTiles(gridFile, args['region'], args['from'], args['to'], whichBands, args['user'], args['pswd'], tilesDir)) %>%
-  mapTilesPeriods(args['period'], args['from']) %>%
-  group_by(period, tile, band) %>%
-  arrange(period, tile, date, band)
+tiles = suppressMessages(
+  getImages(args['region'], args['from'], args['to'], rawDir, gridFile, bands, args['user'], args['pswd']) %>%
+    imagesToTiles(rawDir, whichBands) %>%
+    mapTilesPeriods(args['period'], args['from']) %>%
+    group_by(period, tile, band) %>%
+    arrange(period, tile, date, band)
+)
 if (!all(file.exists(tiles$tileFile))) {
   stop('missing tiles')
 }
@@ -26,6 +29,6 @@ which = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bi
   tmp = tls %>% select(period, tile, band) %>% distinct()
   cat(paste(tmp$period, tmp$tile, tmp$band, collapse = ', '), ' (', n_groups(tls), ')\n', sep = '')
 
-  suppressMessages(prepareWhich(tls, tilesDir, tmpDir, paste0('NMAX', tls$band[1]), whichSkipExisting))
+  suppressMessages(prepareWhich(tls, rawDir, tmpDir, paste0('NMAX', tls$band[1]), whichSkipExisting))
 }
-cat(paste(nrow(which), 'composites produced', Sys.time(), '\n'))
+cat(paste(nrow(which), 'which images produced', Sys.time(), '\n'))

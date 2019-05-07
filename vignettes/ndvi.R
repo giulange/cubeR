@@ -12,8 +12,11 @@ library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(doParallel, quietly = TRUE)
 registerDoParallel()
 
-tiles = suppressMessages(getTiles(gridFile, args['region'], args['from'], args['to'], c(ndviCloudmask, 'B04', 'B08'), args['user'], args['pswd'], tilesDir)) %>%
+tiles = suppressMessages(
+  getImages(args['region'], args['from'], args['to'], rawDir, gridFile, bands, args['user'], args['pswd']) %>%
+  imagesToTiles(rawDir, c('B04', 'B08', ndviCloudmask)) %>%
   group_by(date, tile)
+)
 if (!all(file.exists(tiles$tileFile))) {
   stop('missing tiles - run tile.R and/or mask.R first')
 }
@@ -24,6 +27,6 @@ ndvi = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bin
   tmp = tls %>% select(date, tile) %>% distinct()
   cat(paste(tmp$date, tmp$tile, collapse = ', '), ' (', nrow(tls) / 3, ')\n', sep = '')
 
-  suppressMessages(prepareNdvi(tls, tilesDir, tmpDir, ndviCloudmask, ndviBandName, skipExisting = ndviSkipExisting))
+  suppressMessages(prepareNdvi(tls, rawDir, tmpDir, ndviCloudmask, ndviBandName, skipExisting = ndviSkipExisting))
 }
 cat(paste(nrow(ndvi), 'NDVI images produced', Sys.time(), '\n'))

@@ -46,6 +46,8 @@ prepareNdvi = function(tiles, targetDir, tmpDir, cloudmaskBand = 'CLOUDMASK', ba
   }
 
   if (nrow(ndvi) > 0) {
+    createDirs(ndvi$tileFile)
+
     ndvi = ndvi %>%
       dplyr::group_by(.data$date, .data$tile) %>%
       dplyr::do({

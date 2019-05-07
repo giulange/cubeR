@@ -12,7 +12,7 @@ tilesDir = '/eodc/private/boku/ACube2/tiles'
 # list of bands to be downloaded and tiled
 bands = c('B04', 'B08', 'SCL', 'LAI')
 # number of workers (cores)
-nCores = 8
+nCores = 12
 # each worker (core) is assigned chunksPerCore data chunks (generally you shouldn't need to tune this property)
 chunksPerCore = 10
 
@@ -30,15 +30,13 @@ tileResamplingMethod = 'near'
 # additional gdalwarp parameters used while reprojection & retiling - see `man gdalwap``
 tileGdalOpts = '-multi -wo NUM_THREADS=2'
 
-# description of cloud masks - parameters passed to prepareMasks() - see `?prepareMasks`
+# description of cloud masks - parameters passed to prepareMasks() - see `?prepareMasks` (remember minArea and bufferSize unit is a 20m pixel)
 maskParam = list(
-  list(bandName = 'CLOUDMASK1', minArea = 25L, bufferSize = 10L, invalidValues = c(0L:3L, 7L:11L), bufferedValues = c(3L, 8L:10L)),
+  list(bandName = 'CLOUDMASK1', minArea = 9L, bufferSize = 5L, invalidValues = c(0L:3L, 7L:11L), bufferedValues = c(3L, 8L:10L)),
   list(bandName = 'CLOUDMASK2', minArea = 0L, bufferSize = 0L, invalidValues = c(0L:3L, 7L:11L), bufferedValues = integer())
 )
 # should already existing masks be skipped (TRUE) or reprocessed anyway (FALSE)
 maskSkipExisting = TRUE
-# number of cloud masks generated in parallel (each parallel task requires ~3 GB of RAM)
-maskNCores = 8
 
 # name of the cloud mask to be used for the NDVI generation
 ndviCloudmask = 'CLOUDMASK1'

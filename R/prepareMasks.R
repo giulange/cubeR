@@ -91,10 +91,15 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName, minArea, bufferSize,
 
         mask = raster::setValues(mask, invalid)
         tmpFile = paste0(tmpDir, '/', basename(.data$tileFile))
-        raster::writeRaster(mask, tmpFile, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L, options = 'COMPRESS=DEFLATE')
+        raster::writeRaster(mask, tmpFile, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L)
+
+        tmpFile2 = paste0(tmpDir, '/mask_', basename(tmpFile))
+        command = paste('gdalwarp -tr 10 10 -co "COMPRESS=DEFLATE" -r near', tmpFile, tmpFile2)
+        system(command, ignore.stdout = TRUE)
+        unlink(tmpFile)
 
         createDirs(.data$tileFile)
-        file.rename(tmpFile, .data$tileFile)
+        file.rename(tmpFile2, .data$tileFile)
 
         data.frame(band = bandName, tileFile = .data$tileFile, stringsAsFactors = FALSE)
       }) %>%
