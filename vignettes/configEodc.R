@@ -23,13 +23,6 @@ dwnldTimeout = 120
 dwnldSkipExisting = 'samesize'
 dwnldTries = 2
 
-# should already existing tiles be skipped (TRUE) or reprocessed anyway (FALSE)
-tilesSkipExisting = TRUE
-# reprojection resampling algorithm - see `man gdalwap``
-tileResamplingMethod = 'near'
-# additional gdalwarp parameters used while reprojection & retiling - see `man gdalwap``
-tileGdalOpts = '-multi -wo NUM_THREADS=2'
-
 # description of cloud masks - parameters passed to prepareMasks() - see `?prepareMasks` (remember minArea and bufferSize unit is a 20m pixel)
 maskParam = list(
   list(bandName = 'CLOUDMASK1', minArea = 9L, bufferSize = 5L, invalidValues = c(0L:3L, 7L:11L), bufferedValues = c(3L, 8L:10L)),
@@ -39,18 +32,33 @@ maskParam = list(
 maskSkipExisting = TRUE
 
 # name of the cloud mask to be used for the NDVI generation
-ndviCloudmask = 'CLOUDMASK1'
+ndviCloudmasks = c('CLOUDMASK1', 'CLOUDMASK2')
 # generated NDVI image band name
-ndviBandName = 'NDVI'
+ndviBandNames = c('NDVI', 'NDVI2')
 # should already existing NDVI images be skipped (TRUE) or reprocessed anyway (FALSE)
 ndviSkipExisting = TRUE
 
 # band names of bands used to compute within-a-period maxima (can be more than one band)
-whichBands = c('NDVI')
+whichBands = c('NDVI', 'NDVI2')
+whichPrefix = 'NMAX'
+whichBlockSize = 2048
 # should already existing "which" images be skipped (TRUE) or reprocessed anyway (FALSE)
 whichSkipExisting = TRUE
 
 # band names of bands for which composites should be computed
 compositeBands = c('NDVI', 'LAI')
+compositeBlockSize = 2048
 # should already existing composite images be skipped (TRUE) or reprocessed anyway (FALSE)
 compositeSkipExisting = TRUE
+
+aggregateBands = c('NDVI2')
+aggregateBlockSize = 512
+aggregateQuantiles = c(0.05, 0.5, 0.95)
+aggregateSkipExisting = TRUE
+
+# should already existing tiles be skipped (TRUE) or reprocessed anyway (FALSE)
+tilesSkipExisting = TRUE
+# reprojection resampling algorithm - see `man gdalwap``
+tileResamplingMethod = 'near'
+# additional gdalwarp parameters used while reprojection & retiling - see `man gdalwap``
+tileGdalOpts = '-multi -wo NUM_THREADS=2'
