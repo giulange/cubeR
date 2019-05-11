@@ -1,61 +1,83 @@
 #' Computes NDVI tiles
 #' @details
 #' Computation is done using gdal_calc.py.
-#' @param tiles a data frame describing tiles obtained by row-binding data
+#' @param input a data frame describing tiles obtained by row-binding data
 #'   returned by the \code{\link{prepareTiles}} and \code{\link{prepareMasks}}
 #'   functions
 #' @param targetDir a directory where tiles should be saved (a separate
 #'   subdirectory for each tile will be created)
 #' @param tmpDir a directory for temporary files
-#' @param cloudmaskBand name of the band containing a cloud mask
-#' @param bandName output band name
+#' @param cloudmaskBands name of bands to be used as cloudmasks
+#' @param bandNames output band names
 #' @param skipExisting should already existing tiles be skipped?
 #' @return data frame describing generated NDVI tiles
 #' @import dplyr
 #' @export
-prepareNdvi = function(tiles, targetDir, tmpDir, cloudmaskBand = 'CLOUDMASK', bandName = 'NDVI', skipExisting = TRUE) {
-  ndvi = tiles %>%
-    dplyr::select(.data$date, .data$tile, .data$band, .data$tileFile) %>%
-    dplyr::group_by(.data$date, .data$tile) %>%
-    dplyr::filter(.data$band %in% c(cloudmaskBand, 'B04', 'B08')) %>%
-    dplyr::mutate(band = dplyr::if_else(.data$band == cloudmaskBand, 'CLOUDMASK', .data$band)) %>%
-    tidyr::spread(.data$band, .data$tileFile) %>%
-    dplyr::ungroup() %>%
+prepareNdvi = function(input, targetDir, tmpDir, cloudmaskBands = 'CLOUDMASK', bandNames = 'NDVI', skipExisting = TRUE) {
+  stopifnot(
+    is.vector(cloudmaskBands), is.vector(bandNames), length(cloudmaskBands) == length(bandNames)
+  )
+
+  input = input %>%
+    dplyr::ungroup()
+  masks = input %>%
+    dplyr::filter(.data$band %in% cloudmaskBands) %>%
+    dplyr::inner_join(dplyr::tibble(band = cloudmaskBands, outBand = bandNames)) %>%
+    dplyr::select(.data$date, .data$tile, .data$tileFile, .data$outBand) %>%
+    dplyr::rename(maskFile = .data$tileFile)
+  red = input %>%
+    dplyr::filter(.data$band == 'B04') %>%
+    dplyr::select(.data$date, .data$tile, .data$tileFile) %>%
+    dplyr::rename(redFile = .data$tileFile)
+  nir = input %>%
+    dplyr::filter(.data$band == 'B08') %>%
+    dplyr::select(.data$date, .data$tile, .data$tileFile) %>%
+    dplyr::rename(nirFile = .data$tileFile)
+
+  processed = red %>%
+    dplyr::inner_join(nir) %>%
+    dplyr::inner_join(masks) %>%
     dplyr::mutate(
-      tileFile = getTilePath(targetDir, .data$tile, .data$date, bandName)
-    ) %>%
-    dplyr::mutate(
-      tmpFile = paste0(tmpDir, basename(.data$tileFile))
-    ) %>%
-    dplyr::mutate(
-      command = sprintf(
-        'gdal_calc.py --quiet -A "%s" -B "%s" -C "%s" --calc "10000 * (A.astype(float) - B) / (0.0000001 + A + B)" --outfile %s --overwrite --type Int16 --NoDataValue -32768 --co "COMPRESS=DEFLATE" && mv %s %s',
-        .data$B08, .data$B04, .data$CLOUDMASK, .data$tmpFile, .data$tmpFile, .data$tileFile
-      )
+      outFile = getTilePath(targetDir, .data$tile, .data$date, .data$outBand)
     )
 
   skipped = dplyr::tibble(tileFile = character())
   if (skipExisting) {
-    tmp = file.exists(ndvi$tileFile)
-    skipped = ndvi %>%
+    tmp = file.exists(processed$outFile)
+    skipped = processed %>%
       dplyr::filter(tmp) %>%
-      dplyr::mutate(band = bandName) %>%
+      dplyr::rename(band = .data$outBand, tileFile = .data$outFile) %>%
       dplyr::select(.data$date, .data$tile, .data$band, .data$tileFile)
-    ndvi = ndvi %>%
+    processed = processed %>%
       dplyr::filter(!tmp)
   }
 
-  if (nrow(ndvi) > 0) {
-    createDirs(ndvi$tileFile)
+  if (nrow(processed) > 0) {
+    createDirs(processed$outFile)
 
-    ndvi = ndvi %>%
-      dplyr::group_by(.data$date, .data$tile) %>%
+    processed = processed %>%
+      dplyr::mutate(
+        tmpFile = paste0(tmpDir, basename(.data$outFile))
+      ) %>%
+      dplyr::mutate(
+        command = sprintf(
+          'gdal_calc.py --quiet -A %s -B %s -C %s --calc "10000 * (A.astype(float) - B) / (0.0000001 + A + B)" --outfile %s --overwrite --type Int16 --NoDataValue -32768 --co "COMPRESS=DEFLATE" --co "TILED=YES" --co "BLOCKXSIZE=512" --co "BLOCKYSIZE=512" && mv %s %s',
+          shQuote(.data$nirFile), shQuote(.data$redFile), shQuote(.data$maskFile), shQuote(.data$tmpFile), shQuote(.data$tmpFile), shQuote(.data$outFile)
+        )
+      )
+    tmpFiles = processed$tmpFile
+    on.exit({
+      unlink(tmpFiles)
+    })
+
+    processed = processed %>%
+      dplyr::group_by(.data$date, .data$tile, .data$outBand) %>%
       dplyr::do({
         system(.data$command, ignore.stdout = TRUE)
-        data.frame(band = bandName, tileFile = .data$tileFile, stringsAsFactors = FALSE)
+        dplyr::as.tbl(data.frame(band = .data$outBand, tileFile = .data$outFile, stringsAsFactors = FALSE))[file.exists(.data$outFile), ]
       }) %>%
       dplyr::ungroup()
   }
 
-  return(bind_rows(skipped, ndvi))
+  return(bind_rows(processed, skipped))
 }

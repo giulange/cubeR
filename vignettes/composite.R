@@ -30,6 +30,6 @@ composites = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine
   tmp = tls %>% select(period, tile, band) %>% distinct()
   cat(paste(tmp$period, tmp$tile, tmp$band, collapse = ', '), ' (', n_groups(tls), ')\n', sep = '')
 
-  suppressMessages(prepareComposites(tls, rawDir, tmpDir, compositeSkipExisting))
+  suppressMessages(prepareComposites(tls, rawDir, tmpDir, paste0(cubeRpath, '/python'), compositeSkipExisting, compositeBlockSize))
 }
 cat(paste(nrow(composites), 'composites produced', Sys.time(), '\n'))

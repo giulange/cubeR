@@ -12,7 +12,7 @@
 #' In the second step all pixels in the \code{invalidValues} range are marked as
 #' invalid.
 #'
-#' @param tiles a data frame describing tiled images obtained from
+#' @param input a data frame describing tiled images obtained from
 #'   \code{\link{prepareTiles}}
 #' @param targetDir a directory where tiles should be saved (a separate
 #'   subdirectory for each tile will be created)
@@ -30,14 +30,14 @@
 #' @return data frame describing created masks
 #' @import dplyr
 #' @export
-prepareMasks = function(tiles, targetDir, tmpDir, bandName, minArea, bufferSize, invalidValues, bufferedValues, skipExisting = TRUE) {
+prepareMasks = function(input, targetDir, tmpDir, bandName, minArea, bufferSize, invalidValues, bufferedValues, skipExisting = TRUE) {
   # integer arithmetic is much faster
   minArea = as.integer(minArea)
   bufferSize = as.integer(bufferSize)
   invalidValues = as.integer(invalidValues)
   bufferedValues = as.integer(bufferedValues)
 
-  masks = tiles %>%
+  processed = input %>%
     dplyr::ungroup() %>%
     dplyr::filter(.data$band == 'SCL') %>%
     dplyr::rename(file = .data$tileFile) %>%
@@ -45,15 +45,15 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName, minArea, bufferSize,
 
   skipped = dplyr::tibble(file = character(), tileFile = character())
   if (skipExisting) {
-    tmp = file.exists(masks$tileFile)
-    skipped = masks %>%
+    tmp = file.exists(processed$tileFile)
+    skipped = processed %>%
       dplyr::filter(tmp)
-    masks = masks %>%
+    processed = processed %>%
       dplyr::filter(!tmp)
   }
 
-  if (nrow(masks) > 0L) {
-    masks = masks %>%
+  if (nrow(processed) > 0L) {
+    processed = processed %>%
       dplyr::group_by(.data$date, .data$tile) %>%
       do({
         mask = raster::raster(.data$file)
@@ -80,7 +80,7 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName, minArea, bufferSize,
           tmpFileIn = paste0(tmpDir, '/', .data$date, '_CLOUDS_', .data$tile, '.tif')
           raster::writeRaster(tmp, tmpFileIn, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L)
           tmpFileOut = paste0(tmpDir, '/', .data$date, '_BUFFERED_', .data$tile, '.tif')
-          command = sprintf('gdal_proximity.py -q %s %s -ot Byte -maxdist 10 -distunits PIXEL -fixed-buf-val 1 -values 1 -nodata 2', tmpFileIn, tmpFileOut)
+          command = sprintf('gdal_proximity.py -q %s %s -ot Byte -maxdist 10 -distunits PIXEL -fixed-buf-val 1 -values 1 -nodata 2', shQuote(tmpFileIn), shQuote(tmpFileOut))
           system(command, ignore.stdout = TRUE)
           buffered = raster::getValues(raster::raster(tmpFileOut))
           unlink(c(tmpFileIn, tmpFileOut))
@@ -94,19 +94,20 @@ prepareMasks = function(tiles, targetDir, tmpDir, bandName, minArea, bufferSize,
         raster::writeRaster(mask, tmpFile, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L)
 
         tmpFile2 = paste0(tmpDir, '/mask_', basename(tmpFile))
-        command = paste('gdalwarp -tr 10 10 -co "COMPRESS=DEFLATE" -r near', tmpFile, tmpFile2)
+        createDirs(.data$tileFile)
+        command = sprintf(
+          'gdalwarp -q -tr 10 10 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512" -r near %s %s && mv %s %s', 
+          shQuote(tmpFile), shQuote(tmpFile2), shQuote(tmpFile2), shQuote(.data$tileFile)
+        )
         system(command, ignore.stdout = TRUE)
         unlink(tmpFile)
 
-        createDirs(.data$tileFile)
-        file.rename(tmpFile2, .data$tileFile)
-
-        data.frame(band = bandName, tileFile = .data$tileFile, stringsAsFactors = FALSE)
+        dplyr::as.tbl(data.frame(band = bandName, tileFile = .data$tileFile, stringsAsFactors = FALSE))[file.exists(.data$tileFile), ]
       }) %>%
       dplyr::ungroup()
   }
 
-  ret = masks %>%
+  ret = processed %>%
     dplyr::bind_rows(skipped) %>%
     dplyr::select(-file)
   return(ret)

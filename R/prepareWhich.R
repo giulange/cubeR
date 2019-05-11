@@ -13,92 +13,75 @@
 #' step an output band is computed by comparing values at particular dates to
 #' the maximum one. If the maximum value occurs for many dates, the last date is
 #' taken. }
-#' @param tiles a data frame describing tiled images (must contain at least
+#' @param input a data frame describing tiled images (must contain at least
 #'   columns \code{period, date, tile, band, tileFile})
 #' @param targetDir a directory where tiles should be saved (a separate
 #'   subdirectory for each tile will be created)
 #' @param tmpDir a directory for temporary files
-#' @param bandName output band name
+#' @param pythonDir a directory containing the \code{which.py} python script
+#'   used to compute the output
+#' @param outBandPrefix prefix used to create the output band name(s)
 #' @param skipExisting should already existing images be skipped?
+#' @param blockSize processing block size used during computations - larger
+#'   block requires more memory but (generally) makes computations faster
 #' @return data frame describing generated images
 #' @export
 #' @import dplyr
-prepareWhich = function(tiles, targetDir, tmpDir, bandName, skipExisting) {
-  stopifnot(
-    is.vector(bandName), is.character(bandName), length(bandName) == 1, all(!is.na(bandName))
-  )
-
-  tiles = tiles %>%
+prepareWhich = function(input, targetDir, tmpDir, pythonDir, outBandPrefix, skipExisting, blockSize = 2048) {
+  input = input %>%
     dplyr::ungroup() %>%
     dplyr::mutate(
-      whichFile = getTilePath(targetDir, .data$tile, .data$period, bandName)
+      whichBand = paste0(outBandPrefix, .data$band)
+    ) %>%
+    dplyr::mutate(
+      outFile = getTilePath(targetDir, .data$tile, .data$period, .data$whichBand)
     )
 
-  skipped = bandWhich = dplyr::tibble(period = character(), tile = character(), tileFile = character())
+  skipped = processed = dplyr::tibble(period = character(), tile = character(), tileFile = character())
   if (skipExisting) {
-    tmp = file.exists(tiles$whichFile)
-    skipped = tiles %>%
+    tmp = file.exists(input$outFile)
+    skipped = input %>%
       dplyr::filter(tmp) %>%
-      dplyr::select(.data$period, .data$tile, .data$whichFile) %>%
-      dplyr::rename(tileFile = .data$whichFile) %>%
-      dplyr::distinct()
-    tiles = tiles %>%
+      dplyr::select(.data$period, .data$tile, .data$outFile, .data$band) %>%
+      dplyr::rename(tileFile = .data$outFile) %>%
+      dplyr::distinct() %>%
+      dplyr::mutate(band = paste0('NMAX', .data$band))
+    input = input %>%
       dplyr::filter(!tmp)
   }
 
-  if (nrow(tiles) > 0) {
-    nodata = tiles %>%
-      dplyr::mutate(nodataFile = preprocessNodata(.data$tileFile, tmpDir))
+  if (nrow(input) > 0) {
+    createDirs(input$outFile)
 
-    bandMax = nodata %>%
-      dplyr::group_by(.data$period, .data$tile, .data$whichFile) %>%
-      dplyr::arrange(.data$period, .data$tile, .data$date) %>%
-      dplyr::mutate(
-        calc1 = LETTERS[dplyr::row_number()],
-        calc2 = paste0(dplyr::row_number(), ' * (', LETTERS[dplyr::row_number()], ' == Z)'),
-        arg = paste0('-', LETTERS[dplyr::row_number()], ' "', .data$nodataFile, '"'),
-      ) %>%
+    processed = input %>%
+      dplyr::group_by(.data$period, .data$tile, .data$band) %>%
+      dplyr::arrange(.data$period, .data$tile, .data$band, .data$date) %>%
       dplyr::summarize(
-        stage1Command = sprintf(
-          'gdal_calc.py %s --calc "%s" --outfile {STAGE1FILE} --overwrite --type Int16 --NoDataValue -32768',
-          paste0(.data$arg, collapse = ' '),
-          sub('maximum[(]A[)]', 'A', paste0(paste0(rep('maximum(', dplyr::n()), collapse = ''), paste0(.data$calc1, collapse = '), '), ')'))
-        ),
-        stage2Command = sprintf(
-          'gdal_calc.py -Z {STAGE1FILE} %s --calc "%s" --outfile {STAGE2FILE} --overwrite --type Byte --NoDataValue 0 --co "COMPRESS=DEFLATE"',
-          paste0(.data$arg, collapse = ' '),
-          sub('maximum[(]1 [*] [(]A == Z[)][)]', 'A == Z', paste0(paste0(rep('maximum(', dplyr::n()), collapse = ''), paste0(.data$calc2, collapse = '), '), ')'))
+        whichBand = first(.data$whichBand),
+        outFile = first(.data$outFile),
+        inputFiles = paste0(shQuote(.data$tileFile), collapse = ' ')
+      ) %>% mutate(
+        tmpFile = paste0(tmpDir, '/', basename(.data$outFile))
+      ) %>%
+      mutate(
+        command = sprintf(
+          'python %s/which.py --blockSize %d %s %s && mv %s %s',
+          pythonDir, blockSize, shQuote(.data$tmpFile), .data$inputFiles, shQuote(.data$tmpFile), shQuote(.data$outFile)
         )
-      ) %>%
-      dplyr::group_by(.data$period, .data$tile) %>%
-      dplyr::mutate(
-        stage1File = paste0(tmpDir, '/which1_', basename(getTilePath(tmpDir, .data$tile, .data$period, bandName))),
-        stage2File = paste0(tmpDir, '/which2_', basename(getTilePath(tmpDir, .data$tile, .data$period, bandName)))
-      ) %>%
-      dplyr::mutate(
-        stage1Command = sub('[{]STAGE1FILE[}]', .data$stage1File, .data$stage1Command),
-        stage2Command = sub('[{]STAGE2FILE[}]', .data$stage2File, sub('[{]STAGE1FILE[}]', .data$stage1File, .data$stage2Command))
       )
+    tmpFiles = processed$tmpFile
     on.exit({
-      unlink(c(bandMax$stage1File, bandMax$stage2File, nodata$nodataFile))
+      unlink(tmpFiles)
     })
 
-    bandWhich = bandMax %>%
-      dplyr::group_by(.data$period, .data$tile) %>%
+    processed = processed %>%
+      dplyr::group_by(.data$period, .data$tile, .data$band) %>%
       do({
-        ret = system(.data$stage1Command, ignore.stdout = TRUE)
-        if (ret != 0) {
-          cat(.data$stage1Command, '\n')
-        }
-        ret = system(.data$stage2Command, ignore.stdout = TRUE)
-        if (ret != 0) {
-          cat(.data$stage2Command, '\n')
-        }
-        file.rename(.data$stage2File, .data$whichFile)
-        data.frame(tileFile = .data$whichFile, stringsAsFactors = FALSE)
+        system(.data$command, ignore.stdout = TRUE)
+        dplyr::as.tbl(data.frame(band = .data$whichBand, tileFile = .data$outFile, stringsAsFactors = FALSE))[file.exists(.data$outFile), ]
       }) %>%
       dplyr::ungroup()
   }
 
-  return(dplyr::bind_rows(bandWhich, skipped))
+  return(dplyr::bind_rows(processed, skipped))
 }

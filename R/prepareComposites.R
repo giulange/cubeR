@@ -1,78 +1,70 @@
-#' Aggregates data into months
+#' Generates composites for periods
 #' @details
-#' The aggregation is performed by taking value for a given pixel corresponding
-#' to a date when this pixel had highest NDVI value. To do so an additional band
-#' called \code{WHICH} is computed storing the corresponding date index for
-#' every pixel.
-#' @param tiles a data frame describing tiles to be composited (must contain
+#' Composites are made by taking value for a given pixel corresponding
+#' to a date indicated by a value from a separate file.
+#' @param input a data frame describing tiles to be composited (must contain
 #'   columns \code{date, tile, band, period, tileFile, whichFile})
 #' @param targetDir a directory where computed aggregates should be stored
 #' @param tmpDir a directory for temporary files
+#' @param pythonDir a directory containing the \code{which.py} python script
+#'   used to compute the output
 #' @param skipExisting should already existing images be skipped?
+#' @param blockSize processing block size used during computations - larger
+#'   block requires more memory but (generally) makes computations faster
 #' @return data frame describing computed aggregated images
 #' @import dplyr
 #' @export
-prepareComposites = function(tiles, targetDir, tmpDir, skipExisting = TRUE) {
-  tiles = tiles %>%
+prepareComposites = function(input, targetDir, tmpDir, pythonDir, skipExisting = TRUE, blockSize = 2048) {
+  input = input %>%
     dplyr::ungroup() %>%
     dplyr::mutate(
-      aggFile = getTilePath(targetDir, .data$tile, .data$period, .data$band)
+      outFile = getTilePath(targetDir, .data$tile, .data$period, .data$band)
     )
 
-  skipped = agg = dplyr::tibble(period = character(), tile = character(), band = character(), tileFile = character())
+  skipped = processed = dplyr::tibble(period = character(), tile = character(), band = character(), tileFile = character())
   if (skipExisting) {
-    tmp = file.exists(tiles$aggFile)
-    skipped = tiles %>%
+    tmp = file.exists(input$outFile)
+    skipped = input %>%
       dplyr::filter(tmp) %>%
-      dplyr::select(.data$period, .data$tile, .data$band, .data$aggFile) %>%
-      dplyr::rename(tileFile = .data$aggFile) %>%
+      dplyr::select(.data$period, .data$tile, .data$band, .data$outFile) %>%
+      dplyr::rename(tileFile = .data$outFile) %>%
       dplyr::distinct()
-    tiles = tiles %>%
+    input = input %>%
       dplyr::filter(!tmp)
   }
 
-  if (nrow(tiles) > 0) {
-    # skip nodata values because gdal_calc makes pixel a nodata one if it's nodata in any of input bands
-    # as we are searching for maximum it will work fine on the gdal_calc step until the nodata value is lower then any valid value
-    nodata = tiles %>%
-      dplyr::ungroup() %>%
+  if (nrow(input) > 0) {
+    createDirs(input$outFile)
+
+    processed = input %>%
+      dplyr::group_by(.data$period, .data$tile, .data$band) %>%
+      dplyr::arrange(.data$period, .data$tile, .data$band, .data$date) %>%
+      dplyr::summarize(
+        outFile = dplyr::first(.data$outFile),
+        whichFile = dplyr::first(.data$whichFile),
+        inputFiles = paste0(shQuote(.data$tileFile), collapse = ' ')
+      ) %>% mutate(
+        tmpFile = paste0(tmpDir, '/', basename(.data$outFile))
+      ) %>%
       dplyr::mutate(
-        nodataFile = preprocessNodata(.data$tileFile, tmpDir)
+        command = sprintf(
+          'python %s/at-which.py --blockSize %d %s %s %s && mv %s %s',
+          pythonDir, blockSize, shQuote(.data$tmpFile), shQuote(.data$whichFile), .data$inputFiles, shQuote(.data$tmpFile), shQuote(.data$outFile)
+        )
       )
+    tmpFiles = processed$tmpFile
     on.exit({
-      unlink(nodata$nodataFile)
+      unlink(tmpFiles)
     })
 
-    agg = nodata %>%
-      dplyr::group_by(.data$period, .data$tile, .data$band, .data$whichFile) %>%
-      dplyr::arrange(.data$period, .data$tile, .data$band, .data$whichFile, .data$date) %>%
-      dplyr::mutate(
-        calc = paste0(LETTERS[dplyr::row_number()], ' * (Z == ', dplyr::row_number(), ')'),
-        arg = paste0('-', LETTERS[dplyr::row_number()], ' "', .data$nodataFile, '"')
-      ) %>%
-      dplyr::summarize(
-        command = sprintf(
-          'gdal_calc.py --quiet -Z {WHICHFILE} %s --calc "%s" --outfile {AGGFILE} --co "COMPRESS=DEFLATE"',
-          paste0(.data$arg, collapse = ' '), paste0(.data$calc, collapse = ' + ')
-        ),
-        aggFile = getTilePath(targetDir, .data$tile[1], .data$period[1], .data$band[1])
-      ) %>%
-      dplyr::mutate(
-        aggFileTmp = paste0(tmpDir, '/', basename(.data$aggFile))
-      ) %>%
-      dplyr::mutate(
-        command = paste(sub('[{]WHICHFILE[}]', .data$whichFile, sub('[{]AGGFILE[}]', .data$aggFileTmp, .data$command)), '&& mv', .data$aggFileTmp, .data$aggFile)
-      )
-    agg = agg %>%
+    processed = processed %>%
       dplyr::group_by(.data$period, .data$tile, .data$band) %>%
       dplyr::do({
-        ret = system(.data$command, ignore.stdout = TRUE)
-        if (ret != 0) {
-          cat(.data$command, '\n')
-        }
-        data.frame(tileFile = .data$aggFile, stringsAsFactors = FALSE)
-      })
+        system(.data$command, ignore.stdout = TRUE)
+        dplyr::as.tbl(data.frame(tileFile = .data$outFile, stringsAsFactors = FALSE))[file.exists(.data$outFile), ]
+      }) %>%
+      dplyr::ungroup()
   }
 
-  return(dplyr::bind_rows(agg, skipped))
+  return(dplyr::bind_rows(processed, skipped))
 }

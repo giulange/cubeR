@@ -3,3 +3,4 @@
 ^vignettes/.*R$
 ^vignettes/.*RData$
 ^vignettes/.*xml$
+^python$
