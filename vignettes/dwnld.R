@@ -19,16 +19,22 @@ projection = sf::st_crs(sf::st_read(gridFile, quiet = TRUE))
 images = suppressMessages(getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, projection, bands)) %>%
   arrange(date, band)
 cat('Downloading\n')
+if (dwnldMethod == 'symlink') {
+  dbConn = DBI::dbConnect(RPostgres::Postgres(), host = dwnldDbParam$host, port = dwnldDbParam$port, dbname = dwnldDbParam$dbname, user = dwnldDbParam$user)
+  result = downloadSymlinks(images)
+  cat(sum(result$success), '/', nrow(result), 'downloaded')
+} else {
 options(cores = dwnldNCores)
-toGo = images %>%
-    arrange(desc(date), utm, band) %>%
-    select(url, file)
-while (nrow(toGo) > 0) {
-  cat(sprintf('%d/%d (%d%%) %s\n', nrow(images) - nrow(toGo), nrow(images), as.integer(100 * (nrow(images) - nrow(toGo)) / nrow(images)), Sys.time()))
-  results = foreach(tg = assignToCores(toGo, dwnldNCores, chunksPerCore), .combine = c) %dopar% {
-    cat(tg$file[1], nrow(tg), '\n')
-    try(sentinel2::S2_download(tg$url, tg$file, progressBar = FALSE, skipExisting = dwnldSkipExisting, timeout = dwnldTimeout, tries = dwnldTries, zip = FALSE), silent = TRUE)
+  toGo = images %>%
+      arrange(desc(date), utm, band) %>%
+      select(url, file)
+  while (nrow(toGo) > 0) {
+    cat(sprintf('%d/%d (%d%%) %s\n', nrow(images) - nrow(toGo), nrow(images), as.integer(100 * (nrow(images) - nrow(toGo)) / nrow(images)), Sys.time()))
+    results = foreach(tg = assignToCores(toGo, dwnldNCores, chunksPerCore), .combine = c) %dopar% {
+      cat(tg$file[1], nrow(tg), '\n')
+      try(sentinel2::S2_download(tg$url, tg$file, progressBar = FALSE, skipExisting = dwnldSkipExisting, timeout = dwnldTimeout, tries = dwnldTries, zip = FALSE), silent = TRUE)
+    }
+    toGo = toGo[!results, ]
   }
-  toGo = toGo[!results, ]
+  cat(sprintf('%d/%d (100%%) %s\n', nrow(images), nrow(images), Sys.time()))
 }
-cat(sprintf('%d/%d (100%%) %s\n', nrow(images), nrow(images), Sys.time()))

@@ -9,6 +9,8 @@ cloudCov = 0.4
 nCores = 4
 chunksPerCore = 10
 
+dwnldMethod = 'download'
+dwnldDbParam = list(host = '127.0.0.1', port = 5433, user = 'zozlak', dbname = 'bokudata')
 dwnldNCores = 4
 dwnldTimeout = 120
 dwnldSkipExisting = 'samesize'
@@ -27,16 +29,16 @@ ndviSkipExisting = TRUE
 whichBands = c('NDVI', 'NDVI2')
 whichPrefix = 'NMAX'
 whichBlockSize = 2048
-whichSkipExisting = TRUE
+whichSkipExisting = FALSE
 
 compositeBands = c('NDVI', 'LAI')
 compositeBlockSize = 2048
-compositeSkipExisting = TRUE
+compositeSkipExisting = FALSE
 
 aggregateBands = c('NDVI2')
 aggregateBlockSize = 512
 aggregateQuantiles = c(0.05, 0.5, 0.95)
-aggregateSkipExisting = TRUE
+aggregateSkipExisting = FALSE
 
 tilesSkipExisting = TRUE
 tileResamplingMethod = 'near'

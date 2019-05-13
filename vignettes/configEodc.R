@@ -18,6 +18,12 @@ nCores = 12
 # each worker (core) is assigned chunksPerCore data chunks (generally you shouldn't need to tune this property)
 chunksPerCore = 10
 
+# download method "download" or "symlink"
+# (the latter one works only on machines with a direct access to the BOKU's EODC storage and creates symlinks to already existing files instead of downloading them)
+dwnldMethod = 'symlink'
+# s2.boku.eodc.eu database connection paramerters required for the "symlink" download method
+dwnldDbParam = list(host = '10.250.16.131', port = 5432, user = 'eodc', dbname = 'bokudata')
+## parameters required for the "download" download method
 # number of parallel downloads
 dwnldNCores = 4
 # see `?sentinel2::S2_download`
