@@ -2,6 +2,7 @@
 #' @param roiId an id of a region of interest which to be fetched
 #' @param dateMin minimum acquisition date of an image
 #' @param dateMax maximum acquisition date of an image
+#' @param cloudCovMax maximum accepted cloud coverage (from 0 to 1)
 #' @param dir a target directory (although this function doesn't download files
 #'   it creates target file paths) - each UTM tile is placed in its own
 #'   subdirectory
@@ -15,7 +16,7 @@
 #' @return data frame describing matching images
 #' @import dplyr
 #' @export
-getImages = function(roiId, dateMin, dateMax, dir, projection, bandsS2, user = NULL, pswd = NULL, ...) {
+getImages = function(roiId, dateMin, dateMax, cloudCovMax, dir, projection, bandsS2, user = NULL, pswd = NULL, ...) {
   if (!is.null(user) & !is.null(pswd)) {
     sentinel2::S2_initialize_user(user, pswd)
   }
@@ -23,10 +24,10 @@ getImages = function(roiId, dateMin, dateMax, dir, projection, bandsS2, user = N
     projection = sf::st_crs(sf::st_read(projection, quiet = TRUE))
   }
 
-  granules = sentinel2::S2_query_granule(regionId = roiId, dateMin = dateMin, dateMax = dateMax, atmCorr = TRUE, owned = TRUE, spatial = 'sf') %>%
+  granules = sentinel2::S2_query_granule(regionId = roiId, dateMin = dateMin, dateMax = dateMax, cloudCovMin = 0, cloudCovMax = cloudCovMax * 100, atmCorr = TRUE, owned = TRUE, spatial = 'sf') %>%
     dplyr::select(.data$granuleId, .data$geometry) %>%
     dplyr::mutate(geometry = purrr::map(.data$geometry, sf::st_transform, projection))
-  imgs = dplyr::as.tbl(sentinel2::S2_query_image(regionId = roiId, dateMin = dateMin, dateMax = dateMax, atmCorr = TRUE, owned = TRUE, ...))
+  imgs = dplyr::as.tbl(sentinel2::S2_query_image(regionId = roiId, dateMin = dateMin, dateMax = dateMax, cloudCovMin = 0, cloudCovMax = cloudCovMax * 100, atmCorr = TRUE, owned = TRUE, ...))
   imgs = imgs %>%
     dplyr::rename(dateFull = .data$date) %>%
     dplyr::mutate(date = substr(.data$dateFull, 1, 10)) %>%

@@ -15,7 +15,7 @@ registerDoParallel()
 
 # get corresponding tiles
 tiles = suppressMessages(
-  getImages(args['region'], args['from'], args['to'], rawDir, gridFile, bands, args['user'], args['pswd']) %>%
+  getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, gridFile, bands, args['user'], args['pswd']) %>%
     imagesToTiles(rawDir, 'SCL')
 )
 if (!all(file.exists(tiles$tileFile))) {

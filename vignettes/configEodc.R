@@ -11,6 +11,8 @@ tilesDir = '/eodc/private/boku/ACube2/tiles'
 
 # list of bands to be downloaded and tiled
 bands = c('B04', 'B08', 'SCL', 'LAI')
+# maximal accepted granules' cloud coverage
+cloudCov = 0.4
 # number of workers (cores)
 nCores = 12
 # each worker (core) is assigned chunksPerCore data chunks (generally you shouldn't need to tune this property)
@@ -40,20 +42,27 @@ ndviSkipExisting = TRUE
 
 # band names of bands used to compute within-a-period maxima (can be more than one band)
 whichBands = c('NDVI', 'NDVI2')
+# prefix preppended to the orignal band name to get the target "which band name'
 whichPrefix = 'NMAX'
+# processing block size (affects memory usage)
 whichBlockSize = 2048
 # should already existing "which" images be skipped (TRUE) or reprocessed anyway (FALSE)
 whichSkipExisting = TRUE
 
 # band names of bands for which composites should be computed
 compositeBands = c('NDVI', 'LAI')
+# processing block size (affects memory usage)
 compositeBlockSize = 2048
 # should already existing composite images be skipped (TRUE) or reprocessed anyway (FALSE)
 compositeSkipExisting = TRUE
 
+# bands to be aggregated into quantiles
 aggregateBands = c('NDVI2')
+# processing block size (affects memory usage)
 aggregateBlockSize = 512
+# quantiles to be computed
 aggregateQuantiles = c(0.05, 0.5, 0.95)
+# should already computed quantile images be skipped (TRUE) or reprocessed anyway (FALSE)
 aggregateSkipExisting = TRUE
 
 # should already existing tiles be skipped (TRUE) or reprocessed anyway (FALSE)

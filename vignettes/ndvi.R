@@ -13,7 +13,7 @@ library(doParallel, quietly = TRUE)
 registerDoParallel()
 
 tiles = suppressMessages(
-  getImages(args['region'], args['from'], args['to'], rawDir, gridFile, bands, args['user'], args['pswd']) %>%
+  getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, gridFile, bands, args['user'], args['pswd']) %>%
   imagesToTiles(rawDir, c('B04', 'B08', ndviCloudmasks)) %>%
   group_by(date, tile)
 )

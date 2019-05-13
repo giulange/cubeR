@@ -2,7 +2,7 @@ Package: cubeR
 Type: Package
 Title: Automates data processing for the Landsupport project
 Description: Automates data processing for the Landsupport project.
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person("Mateusz", "Zoltak",  email = "mateusz.zoltak@boku.ac.at", role = c("aut", "cre"))
   )

@@ -30,7 +30,7 @@ prepareQuantiles = function(input, targetDir, tmpDir, pythonDir, quantiles, skip
     ) %>%
     dplyr::group_by(.data$period, .data$tile, .data$band) %>%
     dplyr::mutate(
-      tmpFile = paste0(tmpDir, '/', basename(outFile)),
+      tmpFile = paste0(tmpDir, '/', basename(.data$outFile)),
       nMissing = n() - sum(file.exists(.data$outFile))
     ) %>%
     dplyr::group_by(.data$period, .data$tile, .data$band, .data$nMissing) %>%
@@ -74,8 +74,10 @@ prepareQuantiles = function(input, targetDir, tmpDir, pythonDir, quantiles, skip
     processed = processed %>%
       dplyr::do({
         writeLines(.data$input[[1]]$tileFile, .data$inFilesFile)
-        system(.data$command, ignore.stdout = TRUE)
-        file.rename(.data$output[[1]]$tmpFile, .data$output[[1]]$outFile)
+        ret = system(.data$command, ignore.stdout = TRUE)
+        if (ret == 0) {
+          file.rename(.data$output[[1]]$tmpFile, .data$output[[1]]$outFile)
+        }
         .data$output[[1]][file.exists(.data$output[[1]]$outFile), c('outBand', 'outFile')]
       }) %>%
       dplyr::ungroup()

@@ -5,6 +5,7 @@ rawDir = '/home/zozlak/roboty/BOKU/cube/data/raw'
 tilesDir = '/home/zozlak/roboty/BOKU/cube/data/tiles'
 
 bands = c('B04', 'B08', 'SCL', 'LAI')
+cloudCov = 0.4
 nCores = 4
 chunksPerCore = 10
 
