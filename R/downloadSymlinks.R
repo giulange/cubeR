@@ -28,6 +28,7 @@ downloadSymlinks = function(imageId, conn, targetDir, basePath = '/eodc/private/
     dplyr::mutate(
       exists = file.exists(.data$filename),
     )
+  createDirs(symlinks$tileFile)
   tmp = symlinks %>%
     dplyr::filter(.data$exists) %>%
     dplyr::mutate(
