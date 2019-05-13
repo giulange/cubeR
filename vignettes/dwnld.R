@@ -21,8 +21,8 @@ images = suppressMessages(getImages(args['region'], args['from'], args['to'], cl
 cat('Downloading\n')
 if (dwnldMethod == 'symlink') {
   dbConn = DBI::dbConnect(RPostgres::Postgres(), host = dwnldDbParam$host, port = dwnldDbParam$port, dbname = dwnldDbParam$dbname, user = dwnldDbParam$user)
-  result = downloadSymlinks(images)
-  cat(sum(result$success), '/', nrow(result), 'downloaded')
+  result = suppressMessages(downloadSymlinks(images$imageId, dbConn, rawDir))
+  cat(sum(result$success), 'downloaded,', sum(result$targetExists), 'already exists,', (sum(result$success) + sum(result$targetExists)), 'ok,', nrow(result), 'total\n')
 } else {
 options(cores = dwnldNCores)
   toGo = images %>%

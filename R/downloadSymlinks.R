@@ -26,11 +26,12 @@ downloadSymlinks = function(imageId, conn, targetDir, basePath = '/eodc/private/
       tileFile = getTilePath(targetDir, .data$utm_id, .data$date, .data$band_id)
     ) %>%
     dplyr::mutate(
-      exists = file.exists(.data$filename),
+      srcExists = file.exists(.data$filename),
+      targetExists = file.exists(.data$tileFile)
     )
   createDirs(symlinks$tileFile)
   tmp = symlinks %>%
-    dplyr::filter(.data$exists) %>%
+    dplyr::filter(.data$srcExists & !.data$targetExists) %>%
     dplyr::mutate(
       success = file.symlink(.data$filename, .data$tileFile)
     )
