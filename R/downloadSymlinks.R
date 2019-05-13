@@ -12,11 +12,18 @@
 #' @import dplyr
 downloadSymlinks = function(imageId, conn, targetDir, basePath = '/eodc/private/boku/sentinel2/GRANULES') {
   imageId = unique(imageId)
-  query = sprintf(
-    "SELECT granule_id, utm_id, date::date, band_id, filename FROM s2_images JOIN s2_granules USING (granule_id) WHERE image_id IN (%s)",
-    paste0('$', seq_along(imageId), collapse = ', ')
-  )
-  symlinks = dplyr::as_tibble(DBI::dbGetQuery(conn, query, imageId))
+  symlinks = list()
+  while (length(imageId) > 0) {
+    tmp = imageId[1:min(1000, length(imageId))]
+    query = sprintf(
+      "SELECT granule_id, utm_id, date::date, band_id, filename FROM s2_images JOIN s2_granules USING (granule_id) WHERE image_id IN (%s)",
+      paste0('$', seq_along(tmp), collapse = ', ')
+    )
+    symlinks[[length(symlinks) + 1]] = dplyr::as_tibble(DBI::dbGetQuery(conn, query, tmp))
+    imageId = imageId[-seq_along(tmp)]
+  }
+  symlinks = dplyr::bind_rows(symlinks)
+
   symlinks = symlinks %>%
     dplyr::mutate(
       filename = sprintf(
@@ -32,9 +39,13 @@ downloadSymlinks = function(imageId, conn, targetDir, basePath = '/eodc/private/
   createDirs(symlinks$tileFile)
   tmp = symlinks %>%
     dplyr::filter(.data$srcExists & !.data$targetExists) %>%
-    dplyr::mutate(
-      success = file.symlink(.data$filename, .data$tileFile)
-    )
+    dplyr::mutate(success = FALSE)
+  if (nrow(tmp) > 0) {
+    tmp = tmp %>%
+      dplyr::mutate(
+        success = file.symlink(.data$filename, .data$tileFile)
+      )
+  }
   symlinks = symlinks %>%
     dplyr::left_join(tmp) %>%
     dplyr::mutate(

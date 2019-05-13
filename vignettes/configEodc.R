@@ -14,7 +14,7 @@ bands = c('B04', 'B08', 'SCL', 'LAI')
 # maximal accepted granules' cloud coverage
 cloudCov = 0.4
 # number of workers (cores)
-nCores = 12
+nCores = 32
 # each worker (core) is assigned chunksPerCore data chunks (generally you shouldn't need to tune this property)
 chunksPerCore = 10
 
