@@ -2,7 +2,7 @@
 
 export(assignToCores)
 export(createDirs)
-export(downloadSymlinks)
+export(downloadEodc)
 export(getImages)
 export(getTilePath)
 export(getTiles)

@@ -11,12 +11,21 @@
 #' @param bandsS2 list of Sentinel-2 bands to be fetched
 #' @param user s2.boku.eodc.eu service user name
 #' @param pswd s2.boku.eodc.eu service user password
+#' @param cache should locally cached data be used when available (and should
+#'   local cache be written)
 #' @param ... another parameters to be passed to the
 #'   \code{\link[sentinel2]{S2_query_image}}
 #' @return data frame describing matching images
 #' @import dplyr
 #' @export
-getImages = function(roiId, dateMin, dateMax, cloudCovMax, dir, projection, bandsS2, user = NULL, pswd = NULL, ...) {
+getImages = function(roiId, dateMin, dateMax, cloudCovMax, dir, projection, bandsS2, user = NULL, pswd = NULL, cache = TRUE, ...) {
+  cacheFile = sprintf('%s_%s_%s_%s_%s.RData', roiId, dateMin, dateMax, cloudCovMax, paste0(bandsS2, collapse = '_'))
+  if (cache & file.exists(cacheFile)) {
+    load(cacheFile)
+    createDirs(imgs$file)
+    return(imgs)
+  }
+
   if (!is.null(user) & !is.null(pswd)) {
     sentinel2::S2_initialize_user(user, pswd)
   }
@@ -43,5 +52,10 @@ getImages = function(roiId, dateMin, dateMax, cloudCovMax, dir, projection, band
     dplyr::mutate(file = getTilePath(dir, .data$utm, .data$date, .data$band))
 
   createDirs(imgs$file)
+
+  if (cache & !file.exists(cacheFile)) {
+    save(imgs, file = cacheFile)
+  }
+
   return(imgs)
 }

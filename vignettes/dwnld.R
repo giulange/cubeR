@@ -19,9 +19,9 @@ projection = sf::st_crs(sf::st_read(gridFile, quiet = TRUE))
 images = suppressMessages(getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, projection, bands)) %>%
   arrange(date, band)
 cat('Downloading\n')
-if (dwnldMethod == 'symlink') {
+if (dwnldMethod %in% c('copy', 'symlink')) {
   dbConn = DBI::dbConnect(RPostgres::Postgres(), host = dwnldDbParam$host, port = dwnldDbParam$port, dbname = dwnldDbParam$dbname, user = dwnldDbParam$user)
-  result = suppressMessages(downloadSymlinks(images$imageId, dbConn, rawDir))
+  result = suppressMessages(downloadEodc(images$imageId, dbConn, rawDir, dwnldMethod))
   cat(sum(result$success), 'symlinks created,', sum(result$targetExists), 'already exists,', (sum(result$success) + sum(result$targetExists)), 'ok,', nrow(result), 'total', as.character(Sys.time()), '\n')
 } else {
 options(cores = dwnldNCores)

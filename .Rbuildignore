@@ -2,5 +2,6 @@
 ^\.Rproj\.user$
 ^vignettes/.*R$
 ^vignettes/.*RData$
+^.*RData$
 ^vignettes/.*xml$
 ^python$

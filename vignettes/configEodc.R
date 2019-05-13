@@ -10,7 +10,7 @@ rawDir = '/eodc/private/boku/ACube2/raw'
 tilesDir = '/eodc/private/boku/ACube2/tiles'
 
 # list of bands to be downloaded and tiled
-bands = c('B04', 'B08', 'SCL', 'LAI')
+bands = c('B04', 'B08', 'SCL', 'LAI', 'TCI')
 # maximal accepted granules' cloud coverage
 cloudCov = 0.4
 # number of workers (cores)
@@ -18,8 +18,8 @@ nCores = 32
 # each worker (core) is assigned chunksPerCore data chunks (generally you shouldn't need to tune this property)
 chunksPerCore = 10
 
-# download method "download" or "symlink"
-# (the latter one works only on machines with a direct access to the BOKU's EODC storage and creates symlinks to already existing files instead of downloading them)
+# download method "download", "copy" or "symlink"
+# (two latter ones work only on machines with a direct access to the BOKU's EODC storage)
 dwnldMethod = 'symlink'
 # s2.boku.eodc.eu database connection paramerters required for the "symlink" download method
 dwnldDbParam = list(host = '10.250.16.131', port = 5432, user = 'eodc', dbname = 'bokudata')
