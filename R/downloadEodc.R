@@ -47,6 +47,11 @@ downloadEodc = function(imageIds, conn, targetDir, method, basePath = '/eodc/pri
     )
 
   createDirs(files$tileFile)
+  warning(paste(
+    'removing', sum(files$targetExists & !files$skip, na.rm = TRUE), 'files,',
+    'skipping', sum(files$skip), 'files,',
+    'processing', sum(files$srcExists & !files$skip, na.rm = TRUE), 'files')
+  )
   unlink(files$tileFile[files$targetExists & !files$skip])
 
   processed = files %>%
