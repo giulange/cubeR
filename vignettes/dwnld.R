@@ -14,9 +14,8 @@ library(doParallel, quietly = TRUE)
 registerDoParallel()
 
 S2_initialize_user(args['user'], args['pswd'])
-projection = sf::st_crs(sf::st_read(gridFile, quiet = TRUE))
 
-images = suppressMessages(getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, projection, bands)) %>%
+images = suppressMessages(getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, bands)) %>%
   arrange(date, band)
 cat('Downloading\n')
 if (dwnldMethod %in% c('copy', 'symlink')) {

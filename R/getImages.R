@@ -6,8 +6,6 @@
 #' @param dir a target directory (although this function doesn't download files
 #'   it creates target file paths) - each UTM tile is placed in its own
 #'   subdirectory
-#' @param projection a projection of the returned images extent or a path to a
-#'   file which projection should be used
 #' @param bandsS2 list of Sentinel-2 bands to be fetched
 #' @param user s2.boku.eodc.eu service user name
 #' @param pswd s2.boku.eodc.eu service user password
@@ -18,7 +16,7 @@
 #' @return data frame describing matching images
 #' @import dplyr
 #' @export
-getImages = function(roiId, dateMin, dateMax, cloudCovMax, dir, projection, bandsS2, user = NULL, pswd = NULL, cache = TRUE, ...) {
+getImages = function(roiId, dateMin, dateMax, cloudCovMax, dir, bandsS2, user = NULL, pswd = NULL, cache = TRUE, ...) {
   cacheFile = sprintf('%s_%s_%s_%s_%s.RData', roiId, dateMin, dateMax, cloudCovMax, paste0(bandsS2, collapse = '_'))
   if (cache & file.exists(cacheFile)) {
     load(cacheFile)
@@ -29,13 +27,7 @@ getImages = function(roiId, dateMin, dateMax, cloudCovMax, dir, projection, band
   if (!is.null(user) & !is.null(pswd)) {
     sentinel2::S2_initialize_user(user, pswd)
   }
-  if (is.vector(projection) && file.exists(projection)) {
-    projection = sf::st_crs(sf::st_read(projection, quiet = TRUE))
-  }
 
-  granules = sentinel2::S2_query_granule(regionId = roiId, dateMin = dateMin, dateMax = dateMax, cloudCovMin = 0, cloudCovMax = cloudCovMax * 100, atmCorr = TRUE, owned = TRUE, spatial = 'sf') %>%
-    dplyr::select(.data$granuleId, .data$geometry) %>%
-    dplyr::mutate(geometry = purrr::map(.data$geometry, sf::st_transform, projection))
   imgs = dplyr::as.tbl(sentinel2::S2_query_image(regionId = roiId, dateMin = dateMin, dateMax = dateMax, cloudCovMin = 0, cloudCovMax = cloudCovMax * 100, atmCorr = TRUE, owned = TRUE, ...))
   imgs = imgs %>%
     dplyr::rename(dateFull = .data$date) %>%
@@ -48,7 +40,6 @@ getImages = function(roiId, dateMin, dateMax, cloudCovMax, dir, projection, band
     dplyr::filter(.data$dateFull == max(.data$dateFull)) %>%
     dplyr::select(-.data$dateFull) %>%
     dplyr::ungroup() %>%
-    dplyr::inner_join(granules) %>%
     dplyr::mutate(file = getTilePath(dir, .data$utm, .data$date, .data$band))
 
   createDirs(imgs$file)

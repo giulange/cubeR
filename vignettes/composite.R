@@ -13,7 +13,7 @@ library(doParallel, quietly = TRUE)
 registerDoParallel()
 
 tiles = suppressMessages(
-  getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, gridFile, bands, args['user'], args['pswd']) %>%
+  getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, bands, args['user'], args['pswd']) %>%
     imagesToTiles(rawDir, compositeBands) %>%
     mapTilesPeriods(args['period'], args['from']) %>%
     mutate(whichFile = getTilePath(periodsDir, .data$tile, .data$period, args['whichBand'])) %>%
@@ -30,6 +30,6 @@ composites = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine
   tmp = tls %>% select(period, tile, band) %>% distinct()
   cat(paste(tmp$period, tmp$tile, tmp$band, collapse = ', '), ' (', n_groups(tls), ')\n', sep = '')
 
-  suppressMessages(prepareComposites(tls, rawDir, tmpDir, paste0(cubeRpath, '/python'), compositeSkipExisting, compositeBlockSize))
+  suppressMessages(prepareComposites(tls, periodsDir, tmpDir, paste0(cubeRpath, '/python'), compositeSkipExisting, compositeBlockSize))
 }
 logProcessingResults(composites)

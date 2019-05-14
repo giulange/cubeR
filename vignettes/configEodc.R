@@ -76,8 +76,8 @@ aggregateQuantiles = c(0.05, 0.5, 0.95)
 aggregateSkipExisting = TRUE
 
 # should already existing tiles be skipped (TRUE) or reprocessed anyway (FALSE)
-tilesSkipExisting = TRUE
+tileSkipExisting = TRUE
 # reprojection resampling algorithm - see `man gdalwap``
 tileResamplingMethod = 'near'
 # additional gdalwarp parameters used while reprojection & retiling - see `man gdalwap``
-tileGdalOpts = '-multi -wo NUM_THREADS=2'
+tileGdalOpts = '-multi -wo NUM_THREADS=2 -wo "COMPRESS=DEFLATE" -wo "TILED=YES" -wo "BLOCKXSIZE=512" -wo "BLOCKYSIZE=512"'

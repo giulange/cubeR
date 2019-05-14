@@ -42,7 +42,11 @@ aggregateBlockSize = 512
 aggregateQuantiles = c(0.05, 0.5, 0.95)
 aggregateSkipExisting = TRUE
 
-tileBands = c('LAI', 'NDVI')
+tileRawBands = c('LAI', 'NDVI', 'B04')
+tilePeriodBands = list(
+  '1 month' = c('LAI', 'NDVI', 'TCI'),
+  '1 year' = c('NDVI2q05', 'NDVI2q50', 'NDVI2q95')
+)
 tileSkipExisting = TRUE
 tileResamplingMethod = 'near'
-tileGdalOpts = '-multi -wo NUM_THREADS=2'
+tileGdalOpts = '-multi -wo NUM_THREADS=2 -wo "COMPRESS=DEFLATE" -wo "TILED=YES" -wo "BLOCKXSIZE=512" -wo "BLOCKYSIZE=512"'

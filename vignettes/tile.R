@@ -13,24 +13,43 @@ library(doParallel, quietly = TRUE)
 
 registerDoParallel()
 
-images = suppressMessages(
-  getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, gridFile, bands, args['user'], args['pswd']) %>%
-    imagesToTiles(rawDir, tileBands) %>%
-    mapRawTiles(gridFile) %>%
-    arrange(desc(date), band) %>%
-    group_by(date, band)  # `tile` not included to avoid problems when same image is used by two tiles being simultanously processed on other workers
+tilesRaw = suppressMessages(getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, bands, args['user'], args['pswd'])) %>%
+  select(date, utm) %>%
+  distinct()
+imagesRaw = suppressMessages(
+  tilesRaw %>%
+    imagesToTiles(rawDir, tileRawBands)
 )
-if (!all(file.exists(unique(images$file)))) {
-  stop('raw file missing - run dwnld.R first')
+imagesPeriods = list()
+for (i in seq_along(tilePeriodBands)) {
+  imagesPeriods[[i]] = suppressMessages(
+    tilesRaw %>%
+      mapTilesPeriods(names(tilePeriodBands)[i], args['from']) %>%
+      select(period, utm) %>%
+      distinct() %>%
+      rename(date = period) %>%
+      imagesToTiles(periodsDir, tilePeriodBands[[i]])
+  )
 }
+images = imagesRaw %>%
+  bind_rows(bind_rows(imagesPeriods)) %>%
+  rename(period = date)
+if (!all(file.exists(images$tileFile))) {
+  stop('missing tiles')
+}
+images = suppressMessages(
+  images %>%
+    mapTilesGrid(gridFile) %>%
+    tidyr::nest(tileFile, .key = tileFiles) %>%
+    ungroup()
+)
 
-cat(paste('Tiling', n_distinct(images$file), 'images into', n_distinct(images$date, images$band, images$tile), 'tiles', Sys.time(), '\n'))
+cat(paste('Creating', nrow(images), 'tiles', Sys.time(), '\n'))
 options(cores = nCores)
-tiles = foreach(imgs = assignToCores(images, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
-  imgs = imgs %>% ungroup()
-  tmp = imgs %>% select(date, band) %>% distinct()
-  cat(paste(tmp$date, tmp$band, collapse = ', '), ' (', nrow(imgs), 'i, ', n_distinct(imgs$date, imgs$band, imgs$tile), 't)\n', sep = '')
+tiles = foreach(tls = assignToCores(images, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
+  tmp = tls %>% select(period, tile, band) %>% distinct()
+  cat(paste(tmp$period, tmp$tile, tmp$band, collapse = ', '), ' (', nrow(tls), ')\n', sep = '')
 
-  suppressMessages(prepareTiles(imgs, tilesDir, gridFile, tmpDir, tileResamplingMethod, tilesSkipExisting))
+  suppressMessages(prepareTiles(tls, tilesDir, gridFile, tmpDir, tileResamplingMethod, tileSkipExisting))
 }
-cat(paste(nrow(tiles), 'tiles produced', Sys.time(), '\n'))
+logProcessingResults(tiles)

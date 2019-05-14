@@ -13,12 +13,12 @@ library(doParallel, quietly = TRUE)
 registerDoParallel()
 
 tiles = suppressMessages(
-  getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, gridFile, bands, args['user'], args['pswd']) %>%
+  getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, bands, args['user'], args['pswd']) %>%
   imagesToTiles(rawDir, c('B04', 'B08', ndviCloudmasks)) %>%
   group_by(date, tile)
 )
 if (!all(file.exists(tiles$tileFile))) {
-  stop('missing tiles - run tile.R and/or mask.R first')
+  stop('missing tiles')
 }
 
 nBands = n_distinct(tiles$band)

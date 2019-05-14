@@ -1,7 +1,6 @@
 #' Generates EQUI7 tiles
-#' @param rawTilesMap a data frame describing raw images to tiles mapping
-#'   obtained from \code{\link{mapRawTiles}}. \ Must have at least \code{date,
-#'   band, utm, file, tile, bbox} columns
+#' @param input a data frame describing rasters to be tiled (must contain
+#'   \code{period, band, tile, bbox, tileFiles}
 #' @param targetDir a directory where tiles should be saved (a separate
 #'   subdirectory for each tile will be created)
 #' @param gridFile a file providing a tiling grid (in any file format supported
@@ -16,100 +15,65 @@
 #' @return data frame describing created tiles
 #' @import dplyr
 #' @export
-prepareTiles = function(rawTilesMap, targetDir, gridFile, tmpDir, method, skipExisting = TRUE, gdalOpts = '') {
+prepareTiles = function(input, targetDir, gridFile, tmpDir, method, skipExisting = TRUE, gdalOpts = '') {
   options(scipen = 100)
-  if (!dir.exists(tmpDir)) {
-    dir.create(tmpDir, recursive = TRUE)
-  }
-  grid = sf::read_sf(gridFile, quiet = TRUE)
-  prj = sf::st_crs(grid)$proj4string
+  prj = sf::st_crs(sf::read_sf(gridFile, quiet = TRUE))$proj4string
 
-  noData = dplyr::tibble(
-    band = c(sprintf('B%02d', 1:12), 'B8A', 'AOT', 'CLD', 'DEM', 'PVI', 'SCL', 'SNW', 'TCI', 'VIS', 'WVP', 'albedo', 'FAPAR', 'FCOVER', 'LAI'),
-    nodata = c(rep(0, 22), 65535, rep(32767, 3))
+  inNodata = dplyr::tibble(
+    band = c(sprintf('B%02d', 1:12), 'B8A', 'AOT', 'CLD', 'DEM', 'PVI', 'SCL', 'SNW', 'TCI', 'VIS', 'WVP'),
+    nodata = c(rep(0, 22))
   )
+  outNodata = c(LOG1S = 0, INT1S = 127, INT1U = 255, INT2S = 32767, INT2U = 65534, INT4S = 2147483647, INT4U = 4294967296, FLT4S = 3.4e+38, FLT8S = 1.7e+308)
 
-  rawTilesMap = rawTilesMap %>%
-    dplyr::ungroup()
 
-  # generate output file names
-  rawTilesMap = rawTilesMap %>%
+  input = input %>%
     dplyr::mutate(
-      tileFile = sprintf('%s/%s/%s_%s_%s.tif', targetDir, .data$tile, .data$date, .data$band, .data$tile)
+      outFile = getTilePath(targetDir, .data$tile, .data$period, .data$band)
     )
 
-  # create target directory structure
-  for (i in unique(dirname(rawTilesMap$tileFile))) {
-    dir.create(i, recursive = TRUE, showWarnings = FALSE)
-  }
-
-  # skip already existing tiles
-  skipped = dplyr::tibble(tileFile = character())
+  skipped = processed = dplyr::tibble(period = character(), tile = character(), band = character(), tileFile = character())
   if (skipExisting) {
-    rawTilesMap = rawTilesMap %>%
-      dplyr::left_join(
-        rawTilesMap %>%
-          dplyr::select(.data$tileFile) %>%
-          dplyr::distinct() %>%
-          dplyr::mutate(exists = file.exists(.data$tileFile))
-      )
-    skipped = rawTilesMap %>%
-      dplyr::ungroup() %>%
-      dplyr::filter(.data$exists) %>%
-      dplyr::select(.data$date, .data$band, .data$tile, .data$tileFile) %>%
-      dplyr::distinct()
-    rawTilesMap = rawTilesMap %>%
-      dplyr::filter(!.data$exists) %>%
-      dplyr::select(-.data$exists)
+    tmp = file.exists(input$outFile)
+    skipped = input %>%
+      dplyr::filter(tmp) %>%
+      dplyr::select(.data$period, .data$tile, .data$band, .data$outFile) %>%
+      dplyr::rename(tileFile = .data$outFile)
+    input = input %>%
+      dplyr::filter(!tmp)
   }
 
-  # reproject raw files
-  imgs = rawTilesMap %>%
-    dplyr::select(.data$date, .data$band, .data$utm, .data$file) %>%
-    dplyr::distinct() %>%
-    dplyr::inner_join(noData) %>%
-    dplyr::group_by(.data$date, .data$band, .data$utm, .data$file) %>%
-    dplyr::mutate(
-      equi7File = path.expand(paste0(tmpDir, '/', basename(.data$file)))
-    ) %>%
-    dplyr::mutate(
-      command = paste('gdalwarp ', gdalOpts, ' -q -overwrite -tr 10.0 10.0 -r ', dplyr::if_else(.data$band %in% 'SCL', 'near', method), ' -srcnodata', .data$nodata, '-t_srs', paste0('"', prj, '"'), paste0('"', path.expand(.data$file), '"'), paste0('"', .data$equi7File, '"'))
-    )
-  imgs = imgs %>%
-    dplyr::group_by(.data$date, .data$band, .data$utm, .data$file, .data$equi7File) %>%
-    dplyr::do({
-      system(.data$command, ignore.stdout = TRUE)
-      dplyr::tibble(success = TRUE)
-    }) %>%
-    dplyr::ungroup() %>%
-    dplyr::select(-.data$file, -.data$success)
+  if (nrow(input) > 0) {
+    createDirs(input$outFile)
+    unlink(input$outFile)
 
-  on.exit(unlink(imgs$equi7File))
+    processed = input %>%
+      dplyr::left_join(inNodata) %>%
+      dplyr::group_by(.data$period, .data$tile, .data$band) %>%
+      dplyr::mutate(
+        method = dplyr::if_else(.data$band %in% 'SCL', 'near', method),
+        inNodata = dplyr::if_else(!is.na(.data$nodata), paste0('-srcnodata ', .data$nodata), ''),
+        outNodata = outNodata[raster::dataType(raster::raster(.data$tileFiles[[1]]$tileFile[1]))],
+        tmpFile = paste0(tmpDir, '/', basename(.data$outFile))
+      ) %>%
+      dplyr::mutate(
+        command = sprintf(
+          'gdalwarp %s -q -overwrite -tr 10 10 -te %s -r %s %s -dstnodata %d -t_srs "%s" %s %s && mv %s %s',
+          gdalOpts, .data$bbox, .data$method, .data$inNodata, .data$outNodata, prj, paste0(shQuote(.data$tileFiles[[1]]$tileFile), collapse = ' '), shQuote(.data$tmpFile), shQuote(.data$tmpFile), shQuote(.data$outFile)
+        )
+      )
+    tmpFiles = processed$tmpFile
+    on.exit({
+      unlink(tmpFiles)
+    })
 
-  # retile
-  tiles = rawTilesMap %>%
-    dplyr::left_join(imgs) %>%
-    dplyr::group_by(.data$date, .data$band, .data$tile, .data$bbox) %>%
-    dplyr::summarize(
-      inputFiles = paste0('"', .data$equi7File, '"', collapse = ' ')
-    ) %>%
-    dplyr::mutate(
-      tileFile = getTilePath(targetDir, .data$tile, .data$date, .data$band)
-    ) %>%
-    dplyr::mutate(
-      tileFileTmp = paste0(tmpDir, '/', basename(.data$tileFile))
-    ) %>%
-    dplyr::mutate(command = paste('gdalwarp ', gdalOpts, ' -q -overwrite -co "COMPRESS=DEFLATE" -te', .data$bbox, .data$inputFiles, .data$tileFileTmp, '&& mv', .data$tileFileTmp, .data$tileFile)) %>%
-    dplyr::select(-.data$inputFiles, -.data$bbox)
+    processed = processed %>%
+      dplyr::group_by(.data$period, .data$tile, .data$band) %>%
+      dplyr::do({
+        system(.data$command, ignore.stdout = TRUE)
+        dplyr::as.tbl(data.frame(tileFile = .data$outFile, processed = TRUE, stringsAsFactors = FALSE))
+      }) %>%
+      dplyr::ungroup()
+  }
 
-  tiles = tiles %>%
-    dplyr::group_by(.data$date, .data$band, .data$tile, .data$tileFile) %>%
-    dplyr::do({
-      system(.data$command, ignore.stdout = TRUE)
-      dplyr::tibble(success = TRUE)
-    }) %>%
-    dplyr::select(-.data$success) %>%
-    dplyr::ungroup()
-
-  return(bind_rows(skipped, tiles))
+  return(dplyr::bind_rows(processed, skipped))
 }
