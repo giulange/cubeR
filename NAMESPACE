@@ -2,7 +2,8 @@
 
 export(assignToCores)
 export(createDirs)
-export(downloadEodc)
+export(downloadEodcPerform)
+export(downloadEodcPrepare)
 export(getImages)
 export(getTilePath)
 export(getTiles)

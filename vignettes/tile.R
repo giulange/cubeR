@@ -13,11 +13,9 @@ library(doParallel, quietly = TRUE)
 
 registerDoParallel()
 
-S2_initialize_user(args['user'], args['pswd'])
-projection = sf::st_crs(sf::st_read(gridFile, quiet = TRUE))
 images = suppressMessages(
-  getImages(args['region'], args['from'], args['to'], rawDir, projection, bands) %>%
-    select(band, date, utm, file, geometry) %>%
+  getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, gridFile, bands, args['user'], args['pswd']) %>%
+    imagesToTiles(rawDir, tileBands) %>%
     mapRawTiles(gridFile) %>%
     arrange(desc(date), band) %>%
     group_by(date, band)  # `tile` not included to avoid problems when same image is used by two tiles being simultanously processed on other workers

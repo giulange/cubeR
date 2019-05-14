@@ -26,19 +26,27 @@ srcBands = []
 for i in args.inputFile:
     tmp = gdal.Open(i)
     src.append(tmp)
-    srcBands.append(tmp.GetRasterBand(1))
-nodata = srcBands[0].GetNoDataValue()
+    tmpBands = []
+    for j in xrange(tmp.RasterCount):
+        tmpBands.append(tmp.GetRasterBand(j + 1))
+    srcBands.append(tmpBands)
+nBands = len(srcBands[0])
+nodata = srcBands[0][0].GetNoDataValue()
 
 which = gdal.Open(args.whichFile)
 whichBand = which.GetRasterBand(1)
 nodataWhich = whichBand.GetNoDataValue()
 
 driver = gdal.GetDriverByName('GTiff')
-dst = driver.Create(args.outFile, src[0].RasterXSize, src[0].RasterYSize, 1, srcBands[0].DataType, args.formatOptions)
+dst = driver.Create(args.outFile, src[0].RasterXSize, src[0].RasterYSize, nBands, srcBands[0][0].DataType, args.formatOptions)
 dst.SetGeoTransform(src[0].GetGeoTransform())
 dst.SetProjection(src[0].GetProjection())
-dstBand = dst.GetRasterBand(1)
-dstBand.SetNoDataValue(nodata)
+dstBands = []
+for i in xrange(nBands):
+    tmpBand = dst.GetRasterBand(i + 1)
+    if nodata is not None:
+        tmpBand.SetNoDataValue(nodata)
+    dstBands.append(tmpBand)
 
 t = datetime.datetime.now()
 px = 0
@@ -53,14 +61,17 @@ while px < src[0].RasterXSize:
 
         dataWhich = whichBand.ReadAsArray(px, py, bsx, bsy)
         # dataWhich has shape (bsy, bsx)!
-        dataDst = numpy.zeros((bsy, bsx))
 
-        for i in xrange(len(srcBands)):
-            dataSrc = srcBands[i].ReadAsArray(px, py, bsx, bsy)
-            dataDst = dataDst + dataSrc * (dataWhich == i)
+        for band in xrange(nBands):
+            dataDst = numpy.zeros((bsy, bsx))
+
+            for i in xrange(len(srcBands)):
+                dataSrc = srcBands[i][band].ReadAsArray(px, py, bsx, bsy)
+                dataDst = dataDst + dataSrc * (dataWhich == i)
        
-        dataDst[dataWhich == nodataWhich] = nodata
-        dstBand.WriteArray(dataDst, px, py)
+            if nodata is not None:
+                dataDst[dataWhich == nodataWhich] = nodata
+            dstBands[band].WriteArray(dataDst, px, py)
 
         py += bsy
     px += bsx

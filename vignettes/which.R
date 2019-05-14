@@ -3,7 +3,7 @@ if (length(args) < 7) {
   stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo period')
 }
 names(args) = c('cfgFile', 'user', 'pswd', 'region', 'from', 'to', 'period')
-cat(c('Running which.R', args, as.character(Sys.time()), '\n'))
+cat(paste0(c('Running which.R', args, as.character(Sys.time()), '\n'), collapse = '\t'))
 source(args[1])
 
 devtools::load_all(cubeRpath, quiet = TRUE)
@@ -29,6 +29,6 @@ which = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bi
   tmp = tls %>% select(period, tile, band) %>% distinct()
   cat(paste(tmp$period, tmp$tile, tmp$band, collapse = ', '), ' (', n_groups(tls), ')\n', sep = '')
 
-  suppressMessages(prepareWhich(tls, rawDir, tmpDir, paste0(cubeRpath, '/python'), whichPrefix, whichSkipExisting, whichBlockSize))
+  suppressMessages(prepareWhich(tls, periodsDir, tmpDir, paste0(cubeRpath, '/python'), whichPrefix, whichSkipExisting, whichBlockSize))
 }
-cat(paste(nrow(which), 'which images produced', Sys.time(), '\n'))
+logProcessingResults(which)

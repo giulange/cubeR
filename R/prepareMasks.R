@@ -53,6 +53,8 @@ prepareMasks = function(input, targetDir, tmpDir, bandName, minArea, bufferSize,
   }
 
   if (nrow(processed) > 0L) {
+    unlink(processed$tileFile)
+
     processed = processed %>%
       dplyr::group_by(.data$date, .data$tile) %>%
       do({
@@ -96,13 +98,13 @@ prepareMasks = function(input, targetDir, tmpDir, bandName, minArea, bufferSize,
         tmpFile2 = paste0(tmpDir, '/mask_', basename(tmpFile))
         createDirs(.data$tileFile)
         command = sprintf(
-          'gdalwarp -q -tr 10 10 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512" -r near %s %s && mv %s %s', 
+          'gdalwarp -q -tr 10 10 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512" -r near %s %s && mv %s %s',
           shQuote(tmpFile), shQuote(tmpFile2), shQuote(tmpFile2), shQuote(.data$tileFile)
         )
         system(command, ignore.stdout = TRUE)
         unlink(tmpFile)
 
-        dplyr::as.tbl(data.frame(band = bandName, tileFile = .data$tileFile, stringsAsFactors = FALSE))[file.exists(.data$tileFile), ]
+        dplyr::as.tbl(data.frame(band = bandName, tileFile = .data$tileFile, processed = TRUE, stringsAsFactors = FALSE))
       }) %>%
       dplyr::ungroup()
   }

@@ -3,7 +3,7 @@ if (length(args) < 6) {
   stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo')
 }
 names(args) = c('cfgFile', 'user', 'pswd', 'region', 'from', 'to')
-cat(c('Running ndvi.R', args, as.character(Sys.time()), '\n'))
+cat(paste0(c('Running ndvi.R', args, as.character(Sys.time()), '\n'), collapse = '\t'))
 source(args[1])
 
 devtools::load_all(cubeRpath, quiet = TRUE)
@@ -30,4 +30,4 @@ ndvi = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bin
 
   suppressMessages(prepareNdvi(tls, rawDir, tmpDir, ndviCloudmasks, ndviBandNames, skipExisting = ndviSkipExisting))
 }
-cat(paste(nrow(ndvi), 'NDVI images produced', Sys.time(), '\n'))
+logProcessingResults(ndvi)

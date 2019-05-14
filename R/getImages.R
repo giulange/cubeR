@@ -53,9 +53,7 @@ getImages = function(roiId, dateMin, dateMax, cloudCovMax, dir, projection, band
 
   createDirs(imgs$file)
 
-  if (cache & !file.exists(cacheFile)) {
-    save(imgs, file = cacheFile)
-  }
+  save(imgs, file = cacheFile)
 
   return(imgs)
 }

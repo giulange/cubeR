@@ -52,6 +52,7 @@ prepareWhich = function(input, targetDir, tmpDir, pythonDir, outBandPrefix, skip
 
   if (nrow(input) > 0) {
     createDirs(input$outFile)
+    unlink(input$outFile)
 
     processed = input %>%
       dplyr::group_by(.data$period, .data$tile, .data$band) %>%
@@ -78,7 +79,7 @@ prepareWhich = function(input, targetDir, tmpDir, pythonDir, outBandPrefix, skip
       dplyr::group_by(.data$period, .data$tile, .data$band) %>%
       do({
         system(.data$command, ignore.stdout = TRUE)
-        dplyr::as.tbl(data.frame(band = .data$whichBand, tileFile = .data$outFile, stringsAsFactors = FALSE))[file.exists(.data$outFile), ]
+        dplyr::as.tbl(data.frame(band = .data$whichBand, tileFile = .data$outFile, processed = TRUE, stringsAsFactors = FALSE))
       }) %>%
       dplyr::ungroup()
   }

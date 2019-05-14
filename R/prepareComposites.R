@@ -35,6 +35,7 @@ prepareComposites = function(input, targetDir, tmpDir, pythonDir, skipExisting =
 
   if (nrow(input) > 0) {
     createDirs(input$outFile)
+    unlink(input$outFile)
 
     processed = input %>%
       dplyr::group_by(.data$period, .data$tile, .data$band) %>%
@@ -61,7 +62,7 @@ prepareComposites = function(input, targetDir, tmpDir, pythonDir, skipExisting =
       dplyr::group_by(.data$period, .data$tile, .data$band) %>%
       dplyr::do({
         system(.data$command, ignore.stdout = TRUE)
-        dplyr::as.tbl(data.frame(tileFile = .data$outFile, stringsAsFactors = FALSE))[file.exists(.data$outFile), ]
+        dplyr::as.tbl(data.frame(tileFile = .data$outFile, processed = TRUE, stringsAsFactors = FALSE))
       }) %>%
       dplyr::ungroup()
   }

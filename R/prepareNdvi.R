@@ -54,6 +54,7 @@ prepareNdvi = function(input, targetDir, tmpDir, cloudmaskBands = 'CLOUDMASK', b
 
   if (nrow(processed) > 0) {
     createDirs(processed$outFile)
+    unlink(processed$outFile)
 
     processed = processed %>%
       dplyr::mutate(
@@ -74,7 +75,7 @@ prepareNdvi = function(input, targetDir, tmpDir, cloudmaskBands = 'CLOUDMASK', b
       dplyr::group_by(.data$date, .data$tile, .data$outBand) %>%
       dplyr::do({
         system(.data$command, ignore.stdout = TRUE)
-        dplyr::as.tbl(data.frame(band = .data$outBand, tileFile = .data$outFile, stringsAsFactors = FALSE))[file.exists(.data$outFile), ]
+        dplyr::as.tbl(data.frame(band = .data$outBand, tileFile = .data$outFile, processed = TRUE, stringsAsFactors = FALSE))
       }) %>%
       dplyr::ungroup()
   }

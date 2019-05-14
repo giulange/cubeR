@@ -6,6 +6,8 @@ gridFile = '/eodc/private/boku/ACube/shapefiles/Grid_LAEA5210_100K_polygons.shp'
 tmpDir = '/eodc/private/boku/ACube2/tmp'
 # directory storing rasters before retiling
 rawDir = '/eodc/private/boku/ACube2/raw'
+# directory storing rasters aggregated to periods
+periodsDir = '/eodc/private/boku/ACube2/periods'
 # directory storing rasters after retiling to the target grid (see the gridFile parameter)
 tilesDir = '/eodc/private/boku/ACube2/tiles'
 
@@ -21,6 +23,8 @@ chunksPerCore = 10
 # download method "download", "copy" or "symlink"
 # (two latter ones work only on machines with a direct access to the BOKU's EODC storage)
 dwnldMethod = 'symlink'
+# maximum accepted local files to be deleted during the download (to avoid hitting own foot)
+dwnldMaxRemovals = 2
 # s2.boku.eodc.eu database connection paramerters required for the "symlink" download method
 dwnldDbParam = list(host = '10.250.16.131', port = 5432, user = 'eodc', dbname = 'bokudata')
 ## parameters required for the "download" download method
@@ -47,7 +51,7 @@ ndviBandNames = c('NDVI', 'NDVI2')
 ndviSkipExisting = TRUE
 
 # band names of bands used to compute within-a-period maxima (can be more than one band)
-whichBands = c('NDVI', 'NDVI2')
+whichBands = c('NDVI')
 # prefix preppended to the orignal band name to get the target "which band name'
 whichPrefix = 'NMAX'
 # processing block size (affects memory usage)
@@ -56,7 +60,7 @@ whichBlockSize = 2048
 whichSkipExisting = TRUE
 
 # band names of bands for which composites should be computed
-compositeBands = c('NDVI', 'LAI')
+compositeBands = c('NDVI', 'LAI', 'TCI')
 # processing block size (affects memory usage)
 compositeBlockSize = 2048
 # should already existing composite images be skipped (TRUE) or reprocessed anyway (FALSE)

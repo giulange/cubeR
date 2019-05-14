@@ -39,7 +39,7 @@ prepareQuantiles = function(input, targetDir, tmpDir, pythonDir, quantiles, skip
   input = input %>%
     dplyr::inner_join(output)
 
-  skipped = processed = dplyr::tibble(period = character(), tile = character(), band = character(), tileFile = character())
+  skipped = processed = dplyr::tibble(period = character(), tile = character(), outBand = character(), outFile = character())
   if (skipExisting) {
     skipped = input %>%
       dplyr::filter(.data$nMissing == 0) %>%
@@ -50,7 +50,9 @@ prepareQuantiles = function(input, targetDir, tmpDir, pythonDir, quantiles, skip
   }
 
   if (nrow(input) > 0) {
-    createDirs(dplyr::bind_rows(input$output)$outFile)
+    outFiles = dplyr::bind_rows(input$output)$outFile
+    createDirs(outFiles)
+    unlink(outFiles)
 
     processed = input %>%
       dplyr::group_by(.data$period, .data$tile, .data$band) %>%
@@ -62,8 +64,8 @@ prepareQuantiles = function(input, targetDir, tmpDir, pythonDir, quantiles, skip
       ) %>%
       dplyr::mutate(
         command = sprintf(
-          'python %s/quantiles.py --blockSize %d --mode precise %s %s --q %s',
-          pythonDir, blockSize, .data$outFileTmpl, .data$inFilesFile, paste0(quantiles, collapse = ' ')
+           'python %s/quantiles.py --blockSize %d --mode precise %s %s --q %s',
+           pythonDir, blockSize, .data$outFileTmpl, .data$inFilesFile, paste0(quantiles, collapse = ' ')
         )
       )
     tmpFiles = c(dplyr::bind_rows(processed$output)$tmpFile, processed$inFilesFile)
@@ -78,9 +80,10 @@ prepareQuantiles = function(input, targetDir, tmpDir, pythonDir, quantiles, skip
         if (ret == 0) {
           file.rename(.data$output[[1]]$tmpFile, .data$output[[1]]$outFile)
         }
-        .data$output[[1]][file.exists(.data$output[[1]]$outFile), c('outBand', 'outFile')]
+        .data$output[[1]] %>% dplyr::mutate(processed = TRUE)
       }) %>%
-      dplyr::ungroup()
+      dplyr::ungroup() %>%
+      dplyr::select(.data$period, .data$tile, .data$outBand, .data$outFile, .data$processed)
   }
 
   return(dplyr::bind_rows(processed, skipped) %>% dplyr::rename(band = .data$outBand, tileFile = .data$outFile))
