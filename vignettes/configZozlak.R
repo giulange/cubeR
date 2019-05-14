@@ -1,5 +1,5 @@
 cubeRpath = '/home/zozlak/roboty/BOKU/cube/cubeR'
-gridFile = '/home/zozlak/roboty/BOKU/cube/data/shapes/EQUI7_V13_EU_PROJ_TILE_T1.shp'
+gridFile = '/home/zozlak/roboty/BOKU/cube/data/shapes/Grid_LAEA5210_100K_polygons.shp'
 tmpDir = '/home/zozlak/roboty/BOKU/cube/data/tmp'
 rawDir = '/home/zozlak/roboty/BOKU/cube/data/raw'
 tilesDir = '/home/zozlak/roboty/BOKU/cube/data/tiles'
@@ -40,6 +40,7 @@ aggregateBlockSize = 512
 aggregateQuantiles = c(0.05, 0.5, 0.95)
 aggregateSkipExisting = FALSE
 
-tilesSkipExisting = TRUE
+tileBands = c('LAI', 'NDVI')
+tileSkipExisting = TRUE
 tileResamplingMethod = 'near'
 tileGdalOpts = '-multi -wo NUM_THREADS=2'

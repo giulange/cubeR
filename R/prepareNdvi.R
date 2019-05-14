@@ -57,7 +57,7 @@ prepareNdvi = function(input, targetDir, tmpDir, cloudmaskBands = 'CLOUDMASK', b
 
     processed = processed %>%
       dplyr::mutate(
-        tmpFile = paste0(tmpDir, basename(.data$outFile))
+        tmpFile = paste0(tmpDir, '/', basename(.data$outFile))
       ) %>%
       dplyr::mutate(
         command = sprintf(

@@ -1,7 +1,7 @@
 # directory where the package was cloned
 cubeRpath = '/eodc/private/boku/software/cubeR'
 # file containing the grid (every feture must provide the TILE property)
-gridFile = '/eodc/private/boku/ACube/shapefiles/EQUI7_V13_EU_PROJ_TILE_T1.shp'
+gridFile = '/eodc/private/boku/ACube/shapefiles/Grid_LAEA5210_100K_polygons.shp'
 # directory for storing temporary files
 tmpDir = '/eodc/private/boku/ACube2/tmp'
 # directory storing rasters before retiling
