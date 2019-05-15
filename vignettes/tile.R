@@ -12,6 +12,7 @@ library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(doParallel, quietly = TRUE)
 
 registerDoParallel()
+options(cores = nCores)
 
 tilesRaw = suppressMessages(getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, bands, args['user'], args['pswd'])) %>%
   select(date, utm) %>%
@@ -37,15 +38,14 @@ images = imagesRaw %>%
 if (!all(file.exists(images$tileFile))) {
   stop('missing tiles')
 }
-images = suppressMessages(
-  images %>%
-    mapTilesGrid(gridFile) %>%
-    tidyr::nest(tileFile, .key = tileFiles) %>%
-    ungroup()
-)
+images = foreach(tls = assignToCores(images, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
+  suppressMessages(mapTilesGrid(tls, gridFile))
+}
+images = images %>%
+  tidyr::nest(tileFile, .key = tileFiles) %>%
+  ungroup()
 
 cat(paste('Creating', nrow(images), 'tiles', Sys.time(), '\n'))
-options(cores = nCores)
 tiles = foreach(tls = assignToCores(images, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
   tmp = tls %>% select(period, tile, band) %>% distinct()
   cat(paste(tmp$period, tmp$tile, tmp$band, collapse = ', '), ' (', nrow(tls), ')\n', sep = '')

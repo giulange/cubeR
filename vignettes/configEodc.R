@@ -75,6 +75,13 @@ aggregateQuantiles = c(0.05, 0.5, 0.95)
 # should already computed quantile images be skipped (TRUE) or reprocessed anyway (FALSE)
 aggregateSkipExisting = TRUE
 
+# which bands should be tiled
+tileRawBands = c('LAI', 'NDVI', 'B04', 'B08', 'TCI')
+tilePeriodBands = list(
+  '1 month' = c('LAI', 'NDVI', 'TCI'),
+  '10 days' = c('LAI', 'NDVI', 'TCI'),
+  '1 year' = c('NDVI2q05', 'NDVI2q50', 'NDVI2q95')
+)
 # should already existing tiles be skipped (TRUE) or reprocessed anyway (FALSE)
 tileSkipExisting = TRUE
 # reprojection resampling algorithm - see `man gdalwap``
