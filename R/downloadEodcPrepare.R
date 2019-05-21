@@ -34,9 +34,12 @@ downloadEodcPrepare = function(imageIds, conn, targetDir, method, basePath = '/e
       targetExists = file.exists(.data$tileFile)
     ) %>%
     dplyr::mutate(
-      symlink = dplyr::if_else(method == 'symlink' & .data$targetExists, Sys.readlink(.data$tileFile), ''),
+      symlink = dplyr::if_else(rep(method == 'symlink', dplyr::n()), Sys.readlink(.data$tileFile), NA_character_),
       srcSize = dplyr::if_else(method == 'copy' & .data$srcExists, file.size(.data$filename), NA_real_),
       targetSize = dplyr::if_else(method == 'copy' & .data$targetExists, file.size(.data$tileFile), NA_real_)
+    ) %>%
+    dplyr::mutate(
+      targetExists = .data$targetExists | !is.na(.data$symlink) & .data$symlink != '' # file.exists() reports FALSE on broken symlinks but targetExists should be TRUE for them
     ) %>%
     dplyr::mutate(
       skip = dplyr::coalesce(.data$targetExists & (method == 'symlink' & .data$symlink == .data$filename | method == 'copy' & .data$srcSize == .data$targetSize), FALSE)

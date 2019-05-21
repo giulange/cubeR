@@ -25,7 +25,7 @@ if (dwnldMethod %in% c('copy', 'symlink')) {
   fls = suppressMessages(downloadEodcPerform(fls, dwnldMethod, dwnldMaxRemovals))
   cat(sprintf('%d/%d/%d\ttotal/ok/downloaded\t%s\n', nrow(fls), sum(fls$skip | coalesce(fls$success, FALSE)), sum(fls$success, na.rm = TRUE), Sys.time()))
 } else {
-options(cores = dwnldNCores)
+  options(cores = dwnldNCores)
   toGo = images %>%
       arrange(desc(date), utm, band) %>%
       select(url, file)

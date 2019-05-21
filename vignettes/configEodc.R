@@ -16,7 +16,7 @@ bands = c('B04', 'B08', 'SCL', 'LAI', 'TCI')
 # maximal accepted granules' cloud coverage
 cloudCov = 0.4
 # number of workers (cores)
-nCores = 32
+nCores = 40
 # each worker (core) is assigned chunksPerCore data chunks (generally you shouldn't need to tune this property)
 chunksPerCore = 10
 
@@ -46,25 +46,25 @@ maskSkipExisting = TRUE
 # name of the cloud mask to be used for the NDVI generation
 ndviCloudmasks = c('CLOUDMASK1', 'CLOUDMASK2')
 # generated NDVI image band name
-ndviBandNames = c('NDVI', 'NDVI2')
+ndviBandNames = c('NDVI1', 'NDVI2')
 # should already existing NDVI images be skipped (TRUE) or reprocessed anyway (FALSE)
 ndviSkipExisting = TRUE
 
 # band names of bands used to compute within-a-period maxima (can be more than one band)
-whichBands = c('NDVI')
+whichBands = c('NDVI1', 'NDVI2')
 # prefix preppended to the orignal band name to get the target "which band name'
 whichPrefix = 'NMAX'
 # processing block size (affects memory usage)
 whichBlockSize = 2048
 # should already existing "which" images be skipped (TRUE) or reprocessed anyway (FALSE)
-whichSkipExisting = TRUE
+whichSkipExisting = FALSE
 
 # band names of bands for which composites should be computed
 compositeBands = c('NDVI', 'LAI', 'TCI')
 # processing block size (affects memory usage)
 compositeBlockSize = 2048
 # should already existing composite images be skipped (TRUE) or reprocessed anyway (FALSE)
-compositeSkipExisting = TRUE
+compositeSkipExisting = FALSE
 
 # bands to be aggregated into quantiles
 aggregateBands = c('NDVI2')
@@ -73,17 +73,17 @@ aggregateBlockSize = 512
 # quantiles to be computed
 aggregateQuantiles = c(0.05, 0.5, 0.95)
 # should already computed quantile images be skipped (TRUE) or reprocessed anyway (FALSE)
-aggregateSkipExisting = TRUE
+aggregateSkipExisting = FALSE
 
 # which bands should be tiled
-tileRawBands = c('LAI', 'NDVI', 'B04', 'B08', 'TCI')
+tileRawBands = c()
 tilePeriodBands = list(
-  '1 month' = c('LAI', 'NDVI', 'TCI'),
-  '10 days' = c('LAI', 'NDVI', 'TCI'),
+  '1 month' = c('LAI1', 'NDVI1', 'TCI1', 'LAI2', 'NDVI2', 'TCI2'),
+  '10 days' = c('LAI1', 'NDVI1', 'TCI1', 'LAI2', 'NDVI2', 'TCI2'),
   '1 year' = c('NDVI2q05', 'NDVI2q50', 'NDVI2q95')
 )
 # should already existing tiles be skipped (TRUE) or reprocessed anyway (FALSE)
-tileSkipExisting = TRUE
+tileSkipExisting = FALSE
 # reprojection resampling algorithm - see `man gdalwap``
 tileResamplingMethod = 'near'
 # additional gdalwarp parameters used while reprojection & retiling - see `man gdalwap``
