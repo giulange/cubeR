@@ -11,7 +11,7 @@ import re
 parser = argparse.ArgumentParser()
 parser.add_argument('--verbose', action='store_true')
 parser.add_argument('--blockSize', type=int, default=512)
-parser.add_argument('--gdalCacheSize', type=int)
+parser.add_argument('--gdalCacheSize', type=int, default=2147483648)
 parser.add_argument('--mode', default='precise', choices=['precise', 'fast'])
 parser.add_argument('--q', nargs='*', default=[0.5], type=float)
 parser.add_argument('--formatOptions', nargs='*', default=['COMPRESS=DEFLATE', 'TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512'], help='output format options')
