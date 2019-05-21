@@ -25,16 +25,17 @@ maskParam = list(
 maskSkipExisting = TRUE
 
 ndviCloudmasks = c('CLOUDMASK1', 'CLOUDMASK2')
-ndviBandNames = c('NDVI', 'NDVI2')
+ndviBandNames = c('NDVI1', 'NDVI2')
 ndviSkipExisting = TRUE
 
-whichBands = c('NDVI')
+whichBands = c('NDVI1')
 whichPrefix = 'NMAX'
 whichBlockSize = 2048
 whichSkipExisting = TRUE
 
-compositeBands = c('NDVI', 'LAI', 'TCI')
-compositeBlockSize = 2048
+compositeBands = list(
+  NMAXNDVI1 = c('NDVI1', 'LAI', 'TCI')
+)
 compositeSkipExisting = TRUE
 
 aggregateBands = c('NDVI2')

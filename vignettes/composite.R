@@ -1,8 +1,8 @@
 args = commandArgs(TRUE)
-if (length(args) < 8) {
-  stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo period whichBand')
+if (length(args) < 7) {
+  stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo period')
 }
-names(args) = c('cfgFile', 'user', 'pswd', 'region', 'from', 'to', 'period', 'whichBand')
+names(args) = c('cfgFile', 'user', 'pswd', 'region', 'from', 'to', 'period')
 cat(paste0(c('Running composite.R', args, as.character(Sys.time()), '\n'), collapse = '\t'))
 source(args[1])
 
@@ -12,11 +12,15 @@ library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(doParallel, quietly = TRUE)
 registerDoParallel()
 
+compositeBands = tibble(band = compositeBands) %>%
+  mutate(whichBand = names(compositeBands)) %>%
+  tidyr::unnest()
 tiles = suppressMessages(
   getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, bands, args['user'], args['pswd']) %>%
-    imagesToTiles(rawDir, compositeBands) %>%
+    imagesToTiles(rawDir, unique(compositeBands$band)) %>%
     mapTilesPeriods(args['period'], args['from']) %>%
-    mutate(whichFile = getTilePath(periodsDir, .data$tile, .data$period, args['whichBand'])) %>%
+    left_join(compositeBands) %>%
+    mutate(whichFile = getTilePath(periodsDir, .data$tile, .data$period, whichBand)) %>%
     group_by(period, tile, band) %>%
     arrange(period, tile, band, date)
 )

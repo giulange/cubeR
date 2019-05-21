@@ -46,12 +46,12 @@ maskSkipExisting = TRUE
 # name of the cloud mask to be used for the NDVI generation
 ndviCloudmasks = c('CLOUDMASK1', 'CLOUDMASK2')
 # generated NDVI image band name
-ndviBandNames = c('NDVI1', 'NDVI2')
+ndviBandNames = c('NDVI', 'NDVI2')
 # should already existing NDVI images be skipped (TRUE) or reprocessed anyway (FALSE)
 ndviSkipExisting = TRUE
 
 # band names of bands used to compute within-a-period maxima (can be more than one band)
-whichBands = c('NDVI1', 'NDVI2')
+whichBands = c('NDVI')
 # prefix preppended to the orignal band name to get the target "which band name'
 whichPrefix = 'NMAX'
 # processing block size (affects memory usage)
@@ -60,7 +60,10 @@ whichBlockSize = 2048
 whichSkipExisting = FALSE
 
 # band names of bands for which composites should be computed
-compositeBands = c('NDVI', 'LAI', 'TCI')
+compositeBands = list(
+  NMAXNDVI1 = c('NDVI1', 'LAI', 'TCI'),
+  NMAXNDVI2 = c('NDVI2', 'LAI', 'TCI')
+)
 # processing block size (affects memory usage)
 compositeBlockSize = 2048
 # should already existing composite images be skipped (TRUE) or reprocessed anyway (FALSE)
@@ -75,16 +78,10 @@ aggregateQuantiles = c(0.05, 0.5, 0.95)
 # should already computed quantile images be skipped (TRUE) or reprocessed anyway (FALSE)
 aggregateSkipExisting = FALSE
 
-# which bands should be tiled
-tileRawBands = c()
-tilePeriodBands = list(
-  '1 month' = c('LAI1', 'NDVI1', 'TCI1', 'LAI2', 'NDVI2', 'TCI2'),
-  '10 days' = c('LAI1', 'NDVI1', 'TCI1', 'LAI2', 'NDVI2', 'TCI2'),
-  '1 year' = c('NDVI2q05', 'NDVI2q50', 'NDVI2q95')
-)
 # should already existing tiles be skipped (TRUE) or reprocessed anyway (FALSE)
 tileSkipExisting = FALSE
 # reprojection resampling algorithm - see `man gdalwap``
 tileResamplingMethod = 'near'
 # additional gdalwarp parameters used while reprojection & retiling - see `man gdalwap``
 tileGdalOpts = '-multi -wo NUM_THREADS=2 -wo "COMPRESS=DEFLATE" -wo "TILED=YES" -wo "BLOCKXSIZE=512" -wo "BLOCKYSIZE=512"'
+
