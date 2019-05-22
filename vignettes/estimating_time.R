@@ -1,5 +1,6 @@
 args = c("vignettes/configZozlak.R", "zozlak", "alamakota", "AU_cube", "2018-05-01", "2018-05-31", "1 month", "NMAXNDVI")
 names(args) = c('cfgFile', 'user', 'pswd', 'region', 'from', 'to')
+source(args[1])
 
 library(sentinel2, quietly = TRUE)
 library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
@@ -13,14 +14,14 @@ for (i in seq_along(roi)) {
   cat(i, '\n')
   stat[[length(stat) + 1]] = S2_query_granule(atmCorr = TRUE, regionId = roi[i], dateMin = '2016-01-01', dateMax = '2018-12-31', cloudCovMin = 0, cloudCovMax = cloudCov * 100) %>%
     mutate(roi = roi[i])
-  ready[[length(ready) + 1]] = getImages(roi[i], '2016-01-01', '2018-12-31', cloudCov, rawDir, projection, bands, args['user'], args['pswd'], FALSE) %>%
+  ready[[length(ready) + 1]] = getImages(roi[i], '2016-01-01', '2018-12-31', cloudCov, rawDir, bands) %>%
     mutate(roi = roi[i])
 }
 stat = bind_rows(stat)
 ready = bind_rows(ready)
 save(stat, ready, file = 'vignettes/estimating_time.RData')
 stat = stat %>%
-  select(granuleId, date, utm, orbit, cloudCov, roi) %>%
+  select(granuleId, date, utm, orbit, cloudCov, processDate, roi) %>%
   mutate(date = substr(date, 1, 10))
 ready = ready %>%
   select(granuleId, date, utm, orbit, cloudCov, roi) %>%
@@ -54,4 +55,12 @@ anti_join(stat2, ready2) %>%
   group_by(year, roi) %>%
   summarize(n = n()) %>%
   tidyr::spread(year, n)
-
+missingLai = stat %>%
+  anti_join(ready2) %>%
+  select(-roi) %>%
+  distinct() %>%
+  group_by(date, utm) %>%
+  filter(processDate == max(processDate)) %>%
+  ungroup()
+# insert into regions_of_interest(user_id, region_id, cloud_tresh, granule_id) values ('zozlak', 'granule_301207', null, 301207);
+# insert into regions_of_interest_job_types (user_id, region_id, job_type_id) select 'zozlak', 'granule_301207', job_type_id from dict_job_types where set_on_buy;

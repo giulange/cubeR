@@ -13,7 +13,7 @@ mapTilesGrid = function(input, gridFile, regionFile = NULL) {
   grid = sf::read_sf(gridFile, quiet = TRUE)
   projection = sf::st_crs(grid)
   if (!is.null(regionFile)) {
-    region = sf::read_sf(regionFile) %>%
+    region = sf::read_sf(regionFile, quiet = TRUE) %>%
       sf::st_transform(projection)
     grid = grid %>%
       dplyr::filter(sf::st_intersects(grid, region, sparse = FALSE))
