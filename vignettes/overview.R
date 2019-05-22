@@ -26,7 +26,7 @@ for (tile in tiles) {
 }
 images = tibble(tileFile = images) %>%
   tidyr::separate(tileFile, c('period', 'band', 'tile', 'ext'), '[_.]', remove = FALSE, extra = 'drop', fill = 'left') %>%
-  filter(period >= args['from'] & period <= args['to']) %>%
+  filter(period >= args['from'] & period <= args['to'] & band %in% overviewBands) %>%
   mutate(
     tileFile = paste0(tilesDir, '/', tile, '/', tileFile)
   ) %>%
