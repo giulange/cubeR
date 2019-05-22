@@ -1,8 +1,8 @@
 args = commandArgs(TRUE)
-if (length(args) < 6) {
-  stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo')
+if (length(args) < 4) {
+  stop('This scripts takes parameters: settingsFilePath regionId dateFrom dateTo')
 }
-names(args) = c('cfgFile', 'user', 'pswd', 'region', 'from', 'to')
+names(args) = c('cfgFile', 'region', 'from', 'to')
 cat(paste0(c('Running dwnld.R', args, as.character(Sys.time()), '\n'), collapse = '\t'))
 source(args[1])
 
@@ -15,7 +15,7 @@ registerDoParallel()
 
 S2_initialize_user(args['user'], args['pswd'])
 
-images = suppressMessages(getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, bands)) %>%
+images = getCache(args['region'], args['from'], args['to'], args['cfgFile']) %>%
   arrange(date, band)
 cat('Downloading\n')
 if (dwnldMethod %in% c('copy', 'symlink')) {

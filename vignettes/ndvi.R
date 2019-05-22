@@ -1,8 +1,9 @@
 args = commandArgs(TRUE)
-if (length(args) < 6) {
-  stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo')
+if (length(args) < 4) {
+  stop('This scripts takes parameters: settingsFilePath regionId dateFrom dateTo')
 }
-names(args) = c('cfgFile', 'user', 'pswd', 'region', 'from', 'to')
+names(args) = c('cfgFile', 'region', 'from', 'to')
+t0 = Sys.time()
 cat(paste0(c('Running ndvi.R', args, as.character(Sys.time()), '\n'), collapse = '\t'))
 source(args[1])
 
@@ -13,7 +14,7 @@ library(doParallel, quietly = TRUE)
 registerDoParallel()
 
 tiles = suppressMessages(
-  getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, bands, args['user'], args['pswd']) %>%
+  getCache(args['region'], args['from'], args['to'], args['cfgFile']) %>%
   imagesToTiles(rawDir, c('B04', 'B08', ndviCloudmasks)) %>%
   group_by(date, tile)
 )
@@ -25,9 +26,9 @@ nBands = n_distinct(tiles$band)
 cat(paste('Computing', length(ndviBandNames) * nrow(tiles) / nBands, 'NDVI images', Sys.time(), '\n'))
 options(cores = nCores)
 ndvi = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
-  tmp = tls %>% select(date, tile) %>% distinct()
-  cat(paste(tmp$date, tmp$tile, collapse = ', '), ' (', nrow(tls) / nBands, ')\n', sep = '')
+  tmp = tls %>% select(date, tile, band) %>% filter(band %in% ndviCloudmasks) %>% distinct()
+  cat(paste(tmp$date, tmp$tile, tmp$band, collapse = ', '), ' (', nrow(tmp), ')\n', sep = '')
 
   suppressMessages(prepareNdvi(tls, rawDir, tmpDir, ndviCloudmasks, ndviBandNames, skipExisting = ndviSkipExisting))
 }
-logProcessingResults(ndvi)
+logProcessingResults(ndvi, t0)

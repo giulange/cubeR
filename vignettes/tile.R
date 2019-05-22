@@ -1,8 +1,9 @@
 args = commandArgs(TRUE)
-if (length(args) < 6) {
-  stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo')
+if (length(args) < 4) {
+  stop('This scripts takes parameters: settingsFilePath regionId dateFrom dateTo')
 }
-names(args) = c('cfgFile', 'user', 'pswd', 'region', 'from', 'to')
+names(args) = c('cfgFile', 'region', 'from', 'to')
+t0 = Sys.time()
 cat(c('Running tile.R', args, as.character(Sys.time()), '\n'))
 source(args[1])
 
@@ -14,7 +15,7 @@ library(doParallel, quietly = TRUE)
 registerDoParallel()
 options(cores = nCores)
 
-tilesRaw = suppressMessages(getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, bands, args['user'], args['pswd'])) %>%
+tilesRaw = getCache(args['region'], args['from'], args['to'], args['cfgFile']) %>%
   select(date, utm) %>%
   distinct()
 imagesRaw = suppressMessages(
@@ -52,4 +53,4 @@ tiles = foreach(tls = assignToCores(images, nCores, chunksPerCore), .combine = b
 
   suppressMessages(prepareTiles(tls, tilesDir, gridFile, tmpDir, tileResamplingMethod, tileSkipExisting))
 }
-logProcessingResults(tiles)
+logProcessingResults(tiles, t0)

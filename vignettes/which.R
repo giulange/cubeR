@@ -1,8 +1,9 @@
 args = commandArgs(TRUE)
-if (length(args) < 7) {
-  stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo period')
+if (length(args) < 5) {
+  stop('This scripts takes parameters: settingsFilePath regionId dateFrom dateTo period')
 }
-names(args) = c('cfgFile', 'user', 'pswd', 'region', 'from', 'to', 'period')
+names(args) = c('cfgFile', 'region', 'from', 'to', 'period')
+t0 = Sys.time()
 cat(paste0(c('Running which.R', args, as.character(Sys.time()), '\n'), collapse = '\t'))
 source(args[1])
 
@@ -13,7 +14,7 @@ library(doParallel, quietly = TRUE)
 registerDoParallel()
 
 tiles = suppressMessages(
-  getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, bands, args['user'], args['pswd']) %>%
+  getCache(args['region'], args['from'], args['to'], args['cfgFile']) %>%
     imagesToTiles(rawDir, whichBands) %>%
     mapTilesPeriods(args['period'], args['from']) %>%
     group_by(period, tile, band) %>%
@@ -31,4 +32,4 @@ which = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bi
 
   suppressMessages(prepareWhich(tls, periodsDir, tmpDir, paste0(cubeRpath, '/python'), whichPrefix, whichSkipExisting, whichBlockSize))
 }
-logProcessingResults(which)
+logProcessingResults(which, t0)

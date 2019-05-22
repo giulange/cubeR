@@ -1,8 +1,9 @@
 args = commandArgs(TRUE)
-if (length(args) < 6) {
-  stop('This scripts takes parameters: settingsFilePath user pswd regionId dateFrom dateTo')
+if (length(args) < 4) {
+  stop('This scripts takes parameters: settingsFilePath regionId dateFrom dateTo')
 }
-names(args) = c('cfgFile', 'user', 'pswd', 'region', 'from', 'to')
+names(args) = c('cfgFile', 'region', 'from', 'to')
+t0 = Sys.time()
 cat(paste0(c('Running masks.R', args, as.character(Sys.time()), '\n'), collapse = '\t'))
 source(args[1])
 
@@ -15,7 +16,7 @@ registerDoParallel()
 
 # get corresponding tiles
 tiles = suppressMessages(
-  getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, bands, args['user'], args['pswd']) %>%
+  getCache(args['region'], args['from'], args['to'], args['cfgFile']) %>%
     imagesToTiles(rawDir, 'SCL')
 )
 if (!all(file.exists(tiles$tileFile))) {
@@ -34,4 +35,4 @@ masks = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bi
   }
   bind_rows(masksTmp)
 }
-logProcessingResults(masks)
+logProcessingResults(masks, t0)

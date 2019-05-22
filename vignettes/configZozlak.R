@@ -4,6 +4,7 @@ tmpDir = '/home/zozlak/roboty/BOKU/cube/data/tmp'
 rawDir = '/home/zozlak/roboty/BOKU/cube/data/raw'
 periodsDir = '/home/zozlak/roboty/BOKU/cube/data/periods'
 tilesDir = '/home/zozlak/roboty/BOKU/cube/data/tiles'
+cacheTmpl = '/home/zozlak/roboty/BOKU/cube/data/cache/{region}_{dateFrom}_{dateTo}_{cloudCovMax}_{bands}.csv'
 
 bands = c('B04', 'B08', 'SCL', 'LAI', 'TCI')
 cloudCov = 0.4
@@ -28,15 +29,15 @@ ndviCloudmasks = c('CLOUDMASK1', 'CLOUDMASK2')
 ndviBandNames = c('NDVI1', 'NDVI2')
 ndviSkipExisting = TRUE
 
-whichBands = c('NDVI1')
+whichBands = c('NDVI1', 'NDVI2')
 whichPrefix = 'NMAX'
 whichBlockSize = 2048
 whichSkipExisting = TRUE
 
 compositeBands = list(
-  band      = c('NDVI',     'LAI',      'TCI'),
-  whichBand = c('NMAXNDVI', 'NMAXNDVI', 'NMAXNDVI'),
-  outBand   = c('NDVI1',    'LAI1',     'TCI1')
+  band      = c('NDVI1',     'LAI',       'TCI',       'NDVI2',     'LAI',       'TCI'),
+  whichBand = c('NMAXNDVI1', 'NMAXNDVI1', 'NMAXNDVI1', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2'),
+  outBand   = c('NDVI1',     'LAI1',      'TCI1',      'NDVI2',     'LAI2',      'TCI2')
 )
 compositeBlockSize = 2048
 compositeSkipExisting = TRUE
