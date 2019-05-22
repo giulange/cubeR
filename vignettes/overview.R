@@ -1,8 +1,8 @@
 args = commandArgs(TRUE)
-if (length(args) < 6) {
-  stop('This scripts takes parameters: settingsFilePath regionId dateFrom dateTo user pswd')
+if (length(args) < 4) {
+  stop('This scripts takes parameters: settingsFilePath regionId dateFrom dateTo')
 }
-names(args) = c('cfgFile', 'region', 'from', 'to', 'user', 'pswd')
+names(args) = c('cfgFile', 'region', 'from', 'to')
 t0 = Sys.time()
 cat(c('Running overview.R', args, as.character(Sys.time()), '\n'))
 source(args[1])
@@ -15,8 +15,9 @@ registerDoParallel()
 
 grid = sf::read_sf(gridFile, quiet = TRUE)
 S2_initialize_user(args['user'], args['pswd'])
-region = S2_query_roi(regionId = args['region'], spatial = 'sf')$geometry[[1]]
-region = sf::st_transform(region, sf::st_crs(grid))
+regionFile = getCachePath(cacheTmpl, args['region'], args['from'], args['to'], cloudCov, bands, 'geojson')
+region = sf::st_read(regionFile, quiet = TRUE) %>%
+  sf::st_transform(sf::st_crs(grid))
 tiles = grid$TILE[sf::st_intersects(grid, region, sparse = FALSE)]
 
 images = c()

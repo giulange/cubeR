@@ -4,7 +4,7 @@ if (length(args) < 4) {
 }
 names(args) = c('cfgFile', 'region', 'from', 'to')
 t0 = Sys.time()
-cat(paste0(c('Running masks.R', args, as.character(Sys.time()), '\n'), collapse = '\t'))
+cat(paste0(c('Running mask.R', args, as.character(Sys.time()), '\n'), collapse = '\t'))
 source(args[1])
 
 devtools::load_all(cubeRpath, quiet = TRUE)
