@@ -8,13 +8,14 @@
 #' @param cloudCovMax cloudCovMax placeholder value
 #' @param bands bands placeholder value being a vector of band names (serialized
 #'   to a string using \code{_} as a separator)
+#' @param ext cache file extension
 #' @return path to the cache file
 #' @export
-getCachePath = function(template, region, dateFrom, dateTo, cloudCovMax, bands) {
+getCachePath = function(template, region, dateFrom, dateTo, cloudCovMax, bands, ext = 'csv') {
   template = gsub('\\{region\\}', region, template)
   template = gsub('\\{dateFrom\\}', dateFrom, template)
   template = gsub('\\{dateTo\\}', dateTo, template)
   template = gsub('\\{cloudCovMax\\}', cloudCovMax, template)
   template = gsub('\\{bands\\}', paste0(bands, collapse = '_'), template)
-  return(template)
+  return(paste0(template, '.', ext))
 }

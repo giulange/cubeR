@@ -3,18 +3,27 @@
 #'   contain \code{tileFile})
 #' @param gridFile file with a grid (with tile name in the \code{TILE} feature
 #'   property)
+#' @param regionFile region extent file (because it can be smaller than union of
+#'   all tiles)
 #' @return \code{input} data frame extended with \code{tile} & \code{bbox}
 #'   columns
 #' @import dplyr
 #' @export
-mapTilesGrid = function(input, gridFile) {
+mapTilesGrid = function(input, gridFile, regionFile = NULL) {
   grid = sf::read_sf(gridFile, quiet = TRUE)
+  projection = sf::st_crs(grid)
+  if (!is.null(regionFile)) {
+    region = sf::read_sf(regionFile) %>%
+      sf::st_transform(projection)
+    grid = grid %>%
+      dplyr::filter(sf::st_intersects(grid, region, sparse = FALSE))
+  }
+
   gridBbox = dplyr::tibble(
     tile = grid$TILE,
     bbox = purrr::map(grid$geometry, sf::st_bbox)
   ) %>%
     dplyr::mutate(bbox = purrr::map_chr(.data$bbox, paste, collapse = ' '))
-  projection = sf::st_crs(grid)
 
   result = input %>%
     dplyr::mutate(

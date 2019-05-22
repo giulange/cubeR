@@ -39,8 +39,10 @@ images = imagesRaw %>%
 if (!all(file.exists(images$tileFile))) {
   stop('missing tiles')
 }
+
+regionFile = getCachePath(cacheTmpl, args['region'], args['from'], args['to'], cloudCov, bands, 'geojson')
 images = foreach(tls = assignToCores(images, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
-  suppressMessages(mapTilesGrid(tls, gridFile))
+  suppressMessages(mapTilesGrid(tls, gridFile, regionFile))
 }
 images = images %>%
   tidyr::nest(tileFile, .key = tileFiles) %>%

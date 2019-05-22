@@ -11,9 +11,14 @@ library(sentinel2, quietly = TRUE)
 library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 
 S2_initialize_user(args['user'], args['pswd'])
+
 images = getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, bands)
 cacheFile = getCachePath(cacheTmpl, args['region'], args['from'], args['to'], cloudCov, bands)
 invisible(createDirs(cacheFile))
 write.csv(images, cacheFile, row.names = FALSE)
+
+roi = S2_query_roi(regionId = args['region'])
+cacheFile = getCachePath(cacheTmpl, args['region'], args['from'], args['to'], cloudCov, bands, 'geojson')
+writeLines(roi$geometry, cacheFile)
 
 cat(sprintf('%d\timages\t%s\n', nrow(images), Sys.time()))
