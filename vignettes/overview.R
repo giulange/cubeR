@@ -58,7 +58,7 @@ images = suppressMessages(
 )
 
 cat(paste('Creating', n_groups(images), 'overviews', Sys.time(), '\n'))
-options(cores = nCores)
+options(cores = overviewNCores)
 overviews = foreach(tls = assignToCores(images, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
   tmp = tls %>% select(date, band, tile) %>% distinct()
   cat(paste(tmp$date, tmp$band, collapse = ', '), ' (', n_groups(tls), ')\n', sep = '')
