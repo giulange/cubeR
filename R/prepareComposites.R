@@ -3,7 +3,7 @@
 #' Composites are made by taking value for a given pixel corresponding
 #' to a date indicated by a value from a separate file.
 #' @param input a data frame describing tiles to be composited (must contain
-#'   columns \code{date, tile, band, period, tileFile, whichFile})
+#'   columns \code{date, tile, band, period, outBand, tileFile, whichFile})
 #' @param targetDir a directory where computed aggregates should be stored
 #' @param tmpDir a directory for temporary files
 #' @param pythonDir a directory containing the \code{which.py} python script
@@ -18,7 +18,7 @@ prepareComposites = function(input, targetDir, tmpDir, pythonDir, skipExisting =
   input = input %>%
     dplyr::ungroup() %>%
     dplyr::mutate(
-      outFile = getTilePath(targetDir, .data$tile, .data$period, .data$band)
+      outFile = getTilePath(targetDir, .data$tile, .data$period, .data$outBand)
     )
 
   skipped = processed = dplyr::tibble(period = character(), tile = character(), band = character(), tileFile = character())

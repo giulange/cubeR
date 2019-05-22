@@ -61,8 +61,9 @@ whichSkipExisting = FALSE
 
 # band names of bands for which composites should be computed
 compositeBands = list(
-  NMAXNDVI1 = c('NDVI1', 'LAI', 'TCI'),
-  NMAXNDVI2 = c('NDVI2', 'LAI', 'TCI')
+  band      = c('NDVI1',     'LAI',       'TCI',       'NDVI2',     'LAI',       'TCI'),
+  whichBand = c('NMAXNDVI1', 'NMAXNDVI1', 'NMAXNDVI1', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2'),
+  outBand   = c('NDVI1',     'LAI1',      'TCI1',      'NDVI2',     'LAI2',      'TCI2')
 )
 # processing block size (affects memory usage)
 compositeBlockSize = 2048

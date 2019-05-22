@@ -34,8 +34,11 @@ whichBlockSize = 2048
 whichSkipExisting = TRUE
 
 compositeBands = list(
-  NMAXNDVI1 = c('NDVI1', 'LAI', 'TCI')
+  band      = c('NDVI',     'LAI',      'TCI'),
+  whichBand = c('NMAXNDVI', 'NMAXNDVI', 'NMAXNDVI'),
+  outBand   = c('NDVI1',    'LAI1',     'TCI1')
 )
+compositeBlockSize = 2048
 compositeSkipExisting = TRUE
 
 aggregateBands = c('NDVI2')

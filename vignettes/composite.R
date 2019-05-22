@@ -12,9 +12,7 @@ library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(doParallel, quietly = TRUE)
 registerDoParallel()
 
-compositeBands = tibble(band = compositeBands) %>%
-  mutate(whichBand = names(compositeBands)) %>%
-  tidyr::unnest()
+compositeBands = tibble(band = compositeBands$band, whichBand = compositeBands$whichBand, outBand = compositeBands$outBand)
 tiles = suppressMessages(
   getImages(args['region'], args['from'], args['to'], cloudCov, rawDir, bands, args['user'], args['pswd']) %>%
     imagesToTiles(rawDir, unique(compositeBands$band)) %>%
