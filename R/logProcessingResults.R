@@ -2,7 +2,7 @@ logProcessingResults = function(results, startTime) {
   if (!'processed' %in% names(results)) {
     results$processed = FALSE
   }
-  t = as.numeric(Sys.time() - startTime)
+  t = as.numeric(Sys.time()) - as.numeric(startTime)
   results = results %>%
     dplyr::mutate(
       ok = file.exists(.data$tileFile)
