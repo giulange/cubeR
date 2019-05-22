@@ -32,9 +32,8 @@ ready = ready %>%
 stat %>%
   mutate(year = substr(date, 1, 4)) %>%
   group_by(roi, year) %>%
-  summarize(n = n_distinct(date, utm)) %>%
-  arrange(roi, year) %>%
-  tidyr::spread(year, n)
+  summarize(nn = n_distinct(utm), n = n_distinct(date, utm)) %>%
+  arrange(year, roi)
 stat %>%
   mutate(year = substr(date, 1, 4)) %>%
   group_by(year) %>%

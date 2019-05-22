@@ -1,6 +1,6 @@
 #' Creates overviews
 #' @param input a data frame describing images to be merged into overviews (must
-#'   contain \code{period, band, tile, tileFile}
+#'   contain \code{date, band, tile, tileFile}
 #' @param targetDir a directory where tiles should be saved (a separate
 #'   subdirectory for each tile will be created)
 #' @param tmpDir a directory for temporary files
@@ -16,15 +16,15 @@ prepareOverviews = function(input, targetDir, tmpDir, resolution, method, skipEx
   input = input %>%
     dplyr::ungroup() %>%
     dplyr::mutate(
-      outFile = getTilePath(targetDir, .data$tile, .data$period, .data$band)
+      outFile = getTilePath(targetDir, .data$tile, .data$date, .data$band)
     )
 
-  skipped = processed = dplyr::tibble(period = character(), tile = character(), band = character(), tileFile = character())
+  skipped = processed = dplyr::tibble(date = character(), tile = character(), band = character(), tileFile = character())
   if (skipExisting) {
     tmp = file.exists(input$outFile)
     skipped = input %>%
       dplyr::filter(tmp) %>%
-      dplyr::select(.data$period, .data$tile, .data$band, .data$outFile) %>%
+      dplyr::select(.data$date, .data$tile, .data$band, .data$outFile) %>%
       dplyr::rename(tileFile = .data$outFile) %>%
       dplyr::distinct()
     input = input %>%
@@ -36,7 +36,7 @@ prepareOverviews = function(input, targetDir, tmpDir, resolution, method, skipEx
     unlink(input$outFile)
 
     processed = input %>%
-      dplyr::group_by(.data$period, .data$band, .data$tile) %>%
+      dplyr::group_by(.data$date, .data$band, .data$tile) %>%
       dplyr::summarize(
         inFiles = paste0(shQuote(.data$tileFile), collapse = ' '),
         outFile = dplyr::first(.data$outFile),
@@ -54,7 +54,7 @@ prepareOverviews = function(input, targetDir, tmpDir, resolution, method, skipEx
     })
 
     processed = processed %>%
-      dplyr::group_by(.data$period, .data$band, .data$tile) %>%
+      dplyr::group_by(.data$date, .data$band, .data$tile) %>%
       dplyr::do({
         system(.data$command, ignore.stdout = TRUE)
         dplyr::as.tbl(data.frame(tileFile = .data$outFile, processed = TRUE, stringsAsFactors = FALSE))
