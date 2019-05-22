@@ -26,6 +26,7 @@ if (dwnldMethod %in% c('copy', 'symlink')) {
   cat(sprintf('%d/%d/%d\ttotal/ok/downloaded\t%s\n', nrow(fls), sum(fls$skip | coalesce(fls$success, FALSE)), sum(fls$success, na.rm = TRUE), Sys.time()))
 } else {
   options(cores = dwnldNCores)
+  createDirs(images$file)
   toGo = images %>%
       arrange(desc(date), utm, band) %>%
       select(url, file)

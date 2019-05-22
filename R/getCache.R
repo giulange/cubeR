@@ -6,7 +6,7 @@
 #' @return data frame describing raw images
 getCache = function(region, dateFrom, dateTo, cfgFile) {
   source(cfgFile, local = TRUE)
-  cachePath = getCachePath(cacheTmpl, region, dateFrom, dateTo, cloudCov, bands)
-  images = dplyr::as.tbl(read.csv(cachePath, stringsAsFactors = FALSE))
+  cachePath = getCachePath(get('cacheTmpl'), region, dateFrom, dateTo, get('cloudCov'), get('bands'))
+  images = dplyr::as.tbl(utils::read.csv(cachePath, stringsAsFactors = FALSE))
   return(images)
 }
