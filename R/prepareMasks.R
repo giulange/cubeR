@@ -83,6 +83,7 @@ prepareMasks = function(input, targetDir, tmpDir, bandName, minArea, bufferSize,
           raster::writeRaster(tmp, tmpFileIn, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L)
           tmpFileOut = paste0(tmpDir, '/', .data$date, '_BUFFERED_', .data$tile, '.tif')
           command = sprintf('gdal_proximity.py -q %s %s -ot Byte -maxdist 10 -distunits PIXEL -fixed-buf-val 1 -values 1 -nodata 2', shQuote(tmpFileIn), shQuote(tmpFileOut))
+          unlink(tmpFileOut)
           system(command, ignore.stdout = TRUE)
           buffered = raster::getValues(raster::raster(tmpFileOut))
           unlink(c(tmpFileIn, tmpFileOut))
@@ -98,7 +99,7 @@ prepareMasks = function(input, targetDir, tmpDir, bandName, minArea, bufferSize,
         tmpFile2 = paste0(tmpDir, '/mask_', basename(tmpFile))
         createDirs(.data$tileFile)
         command = sprintf(
-          'gdalwarp -q -tr 10 10 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512" -r near %s %s && mv %s %s',
+          'gdalwarp -q -overwrite -tr 10 10 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512" -r near %s %s && mv %s %s',
           shQuote(tmpFile), shQuote(tmpFile2), shQuote(tmpFile2), shQuote(.data$tileFile)
         )
         system(command, ignore.stdout = TRUE)
