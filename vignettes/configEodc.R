@@ -10,6 +10,10 @@ rawDir = '/eodc/private/boku/ACube2/raw'
 periodsDir = '/eodc/private/boku/ACube2/periods'
 # directory storing rasters after retiling to the target grid (see the gridFile parameter)
 tilesDir = '/eodc/private/boku/ACube2/tiles'
+# directory storing overviews
+overviewsDir = '/eodc/private/boku/ACube2/overviews'
+# raw images cache file path template (see `?getCachePath`)
+cacheTmpl = '/eodc/private/boku/ACube2/cache/{region}_{dateFrom}_{dateTo}_{cloudCovMax}_{bands}'
 
 # list of bands to be downloaded and tiled
 bands = c('B02', 'B03', 'B04', 'B08', 'B8A', 'B11', 'B12', 'SCL', 'LAI', 'TCI')
@@ -56,13 +60,13 @@ indicatorIndicators = list(
 indicatorSkipExisting = TRUE
 
 # band names of bands used to compute within-a-period maxima (can be more than one band)
-whichBands = c('NDVI')
-# prefix preppended to the orignal band name to get the target "which band name'
+whichBands = c('NDVI1', 'NDVI2')
+# prefix preppended to the orignal band name to get the target "which band name"
 whichPrefix = 'NMAX'
 # processing block size (affects memory usage)
 whichBlockSize = 2048
 # should already existing "which" images be skipped (TRUE) or reprocessed anyway (FALSE)
-whichSkipExisting = FALSE
+whichSkipExisting = TRUE
 
 # band names of bands for which composites should be computed
 compositeBands = list(
@@ -73,7 +77,7 @@ compositeBands = list(
 # processing block size (affects memory usage)
 compositeBlockSize = 2048
 # should already existing composite images be skipped (TRUE) or reprocessed anyway (FALSE)
-compositeSkipExisting = FALSE
+compositeSkipExisting = TRUE
 
 # bands to be aggregated into quantiles
 aggregateBands = c('NDVI2')
@@ -82,12 +86,28 @@ aggregateBlockSize = 512
 # quantiles to be computed
 aggregateQuantiles = c(0.05, 0.5, 0.95)
 # should already computed quantile images be skipped (TRUE) or reprocessed anyway (FALSE)
-aggregateSkipExisting = FALSE
+aggregateSkipExisting = TRUE
 
+tileRawBands = character()
+tilePeriodBands = list(
+  '1 month' = c('LAI1', 'NDVI1', 'TCI1', 'LAI2', 'NDVI2', 'TCI2'),
+  '1 year' = c('NDVI2q05', 'NDVI2q50', 'NDVI2q95')
+)
 # should already existing tiles be skipped (TRUE) or reprocessed anyway (FALSE)
-tileSkipExisting = FALSE
+tileSkipExisting = TRUE
 # reprojection resampling algorithm - see `man gdalwap``
 tileResamplingMethod = 'near'
 # additional gdalwarp parameters used while reprojection & retiling - see `man gdalwap``
 tileGdalOpts = '-multi -wo NUM_THREADS=2 -wo "COMPRESS=DEFLATE" -wo "TILED=YES" -wo "BLOCKXSIZE=512" -wo "BLOCKYSIZE=512"'
+
+# tiles to be merged into overviews
+overviewPeriodBands = list(
+  '1 month' = c('LAI1',    'LAI2', 'NDVI1', 'NDVI2', 'TCI1', 'TCI2'),
+  '1 year'  = c('NDVI2q05', 'NDVI2q50', 'NDVI2q95')
+)
+overviewResolution = 100
+overviewResamplingMethod = 'bilinear'
+overviewGdalOpts = '--config GDAL_CACHEMAX 4096 -multi -wo NUM_THREADS=2 -wo "COMPRESS=DEFLATE" -wo "TILED=YES" -wo "BLOCKXSIZE=512" -wo "BLOCKYSIZE=512"'
+overviewNCores = 16
+overviewSkipExisting = TRUE
 
