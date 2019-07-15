@@ -7,7 +7,7 @@ tilesDir = '/home/zozlak/roboty/BOKU/cube/data/tiles'
 overviewsDir = '/home/zozlak/roboty/BOKU/cube/data/overviews'
 cacheTmpl = '/home/zozlak/roboty/BOKU/cube/data/cache/{region}_{dateFrom}_{dateTo}_{cloudCovMax}_{bands}'
 
-bands = c('B04', 'B08', 'SCL', 'LAI', 'TCI')
+bands = c('B02', 'B03', 'B04', 'B08', 'B8A', 'B11', 'B12', 'SCL', 'LAI', 'TCI')
 cloudCov = 0.4
 nCores = 6
 chunksPerCore = 10
@@ -26,8 +26,18 @@ maskParam = list(
 )
 maskSkipExisting = TRUE
 
-ndviCloudmasks = c('CLOUDMASK1', 'CLOUDMASK2')
-ndviBandNames = c('NDVI1', 'NDVI2')
+indicatorIndicators = list(
+  list(bandName = 'NDVI2',  resolution = 10, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B08', 'B' = 'B04'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
+  list(bandName = 'NDTI2',  resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B11', 'B' = 'B12'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
+  list(bandName = 'MNDWI2', resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B03', 'B' = 'B11'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
+  list(bandName = 'NDBI2',  resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B11', 'B' = 'B8A'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
+  list(bandName = 'BSI2',   resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B12', 'B' = 'B04', 'C' = 'B8A', 'D' = 'B02'), equation = '((A.astype(float) + B) - (C + D) ) / (0.0000001 + A + B + C + D)'),
+  list(bandName = 'BLFEI2', resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B03', 'B' = 'B04', 'C' = 'B12', 'D' = 'B11'), equation = '((A.astype(float) + B + C) / 3 - D) / (0.0000001 + (A + B + C) / 3 + D)')
+)
+indicatorSkipExisting = TRUE
+
+ndviCloudmasks = c('CLOUDMASK2')
+ndviBandNames = c('NDVI3')
 ndviSkipExisting = TRUE
 
 whichBands = c('NDVI1', 'NDVI2')

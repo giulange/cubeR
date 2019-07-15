@@ -12,7 +12,7 @@ periodsDir = '/eodc/private/boku/ACube2/periods'
 tilesDir = '/eodc/private/boku/ACube2/tiles'
 
 # list of bands to be downloaded and tiled
-bands = c('B04', 'B08', 'SCL', 'LAI', 'TCI')
+bands = c('B02', 'B03', 'B04', 'B08', 'B8A', 'B11', 'B12', 'SCL', 'LAI', 'TCI')
 # maximal accepted granules' cloud coverage
 cloudCov = 0.4
 # number of workers (cores)
@@ -24,7 +24,7 @@ chunksPerCore = 10
 # (two latter ones work only on machines with a direct access to the BOKU's EODC storage)
 dwnldMethod = 'symlink'
 # maximum accepted local files to be deleted during the download (to avoid hitting own foot)
-dwnldMaxRemovals = 2
+dwnldMaxRemovals = 100
 # s2.boku.eodc.eu database connection paramerters required for the "symlink" download method
 dwnldDbParam = list(host = '10.250.16.131', port = 5432, user = 'eodc', dbname = 'bokudata')
 ## parameters required for the "download" download method
@@ -43,12 +43,17 @@ maskParam = list(
 # should already existing masks be skipped (TRUE) or reprocessed anyway (FALSE)
 maskSkipExisting = TRUE
 
-# name of the cloud mask to be used for the NDVI generation
-ndviCloudmasks = c('CLOUDMASK1', 'CLOUDMASK2')
-# generated NDVI image band name
-ndviBandNames = c('NDVI', 'NDVI2')
-# should already existing NDVI images be skipped (TRUE) or reprocessed anyway (FALSE)
-ndviSkipExisting = TRUE
+# indicators definitions
+indicatorIndicators = list(
+  list(bandName = 'NDVI2',  resolution = 10, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B04', 'B' = 'B08'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
+  list(bandName = 'NDTI2',  resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B11', 'B' = 'B12'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
+  list(bandName = 'MNDWI2', resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B03', 'B' = 'B11'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
+  list(bandName = 'NDBI2',  resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B11', 'B' = 'B8A'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
+  list(bandName = 'BSI2',   resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B12', 'B' = 'B04', 'C' = 'B8A', 'D' = 'B02'), equation = '((A.astype(float) + B) - (C + D) ) / (0.0000001 + A + B + C + D)'),
+  list(bandName = 'BLFEI2', resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B03', 'B' = 'B04', 'C' = 'B12', 'D' = 'B11'), equation = '((A.astype(float) + B + C) / 3 - D) / (0.0000001 + (A + B + C) / 3 + D)')
+)
+# should already existing indicator images be skipped (TRUE) or reprocessed anyway (FALSE)
+indicatorSkipExisting = TRUE
 
 # band names of bands used to compute within-a-period maxima (can be more than one band)
 whichBands = c('NDVI')
