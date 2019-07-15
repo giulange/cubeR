@@ -17,11 +17,12 @@ gAll = as.tbl(S2_query_granule(regionId = '%_cube', cloudCovMax = 100))
 g = gAll %>%
   mutate(month = date2months(date)) %>%
   left_join(gCube)
+save(g, file = 'all_granules.RData')
 
 maxGranules = 1 # per orbit
 maxCc = 0.2
-monthMin = date2months('2019-02') #min(g$month)
-monthMax = date2months('2019-04') #max(g$month)
+monthMin = date2months('2019-04') #min(g$month)
+monthMax = date2months('2019-06') #max(g$month)
 
 months = data_frame(month = seq(monthMin, monthMax)) %>%
   left_join(g) %>%
@@ -51,8 +52,8 @@ months %>%
 
 maxGranules = 1 # per orbit
 maxCc = 0.2
-monthMin = date2months('2019-02') #min(g$month)
-monthMax = date2months('2019-04') #max(g$month)
+monthMin = date2months('2019-04') #min(g$month)
+monthMax = date2months('2019-06') #max(g$month)
 
 months = data_frame(month = seq(monthMin, monthMax)) %>%
   left_join(g) %>%

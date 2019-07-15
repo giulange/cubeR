@@ -20,6 +20,7 @@ for (i in seq_along(roi)) {
 stat = bind_rows(stat)
 ready = bind_rows(ready)
 save(stat, ready, file = 'vignettes/estimating_time.RData')
+load('vignettes/estimating_time.RData')
 stat = stat %>%
   select(granuleId, date, utm, orbit, cloudCov, processDate, roi) %>%
   mutate(date = substr(date, 1, 10))
