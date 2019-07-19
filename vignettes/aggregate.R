@@ -30,6 +30,13 @@ aggregates = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine
   tmp = tls %>% select(period, tile, band) %>% distinct()
   cat(paste(tmp$period, tmp$tile, tmp$band, collapse = ', '), ' (', n_groups(tls), ')\n', sep = '')
 
-  suppressMessages(prepareQuantiles(tls, periodsDir, tmpDir, paste0(cubeRpath, '/python'), aggregateQuantiles, aggregateSkipExisting, aggregateBlockSize))
+  results = suppressMessages(prepareQuantiles(tls, periodsDir, tmpDir, paste0(cubeRpath, '/python'), aggregateQuantiles, aggregateSkipExisting, aggregateBlockSize))
+  if (aggregateCounts) {
+    tlsTmp = tls %>%
+      filter(band == first(band))
+    results = results %>%
+      bind_rows(suppressMessages(prepareCounts(tlsTmp, periodsDir, tmpDir, paste0(cubeRpath, '/python'), 'N2', aggregateSkipExisting, aggregateBlockSize)))
+  }
+  results
 }
 logProcessingResults(aggregates, t0)

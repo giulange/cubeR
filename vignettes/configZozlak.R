@@ -27,6 +27,7 @@ maskParam = list(
 maskSkipExisting = TRUE
 
 indicatorIndicators = list(
+  list(bandName = 'NDVI1',  resolution = 10, mask = 'CLOUDMASK1', factor = 10000, bands = c('A' = 'B08', 'B' = 'B04'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
   list(bandName = 'NDVI2',  resolution = 10, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B08', 'B' = 'B04'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
   list(bandName = 'NDTI2',  resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B11', 'B' = 'B12'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
   list(bandName = 'MNDWI2', resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B03', 'B' = 'B11'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
@@ -56,6 +57,7 @@ compositeSkipExisting = TRUE
 aggregateBands = c('NDVI2')
 aggregateBlockSize = 512
 aggregateQuantiles = c(0.05, 0.5, 0.95)
+aggregateCounts = TRUE
 aggregateSkipExisting = TRUE
 
 tileRawBands = character()
