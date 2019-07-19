@@ -44,7 +44,8 @@ prepareQuantiles = function(input, targetDir, tmpDir, pythonDir, quantiles, skip
     skipped = input %>%
       dplyr::filter(.data$nMissing == 0) %>%
       dplyr::select(.data$period, .data$tile, .data$output) %>%
-      tidyr::unnest()
+      tidyr::unnest() %>%
+      dplyr::select(-.data$tmpFile)
     input = input %>%
       dplyr::filter(.data$nMissing > 0)
   }

@@ -86,6 +86,8 @@ aggregateBands = c('NDVI2')
 aggregateBlockSize = 512
 # quantiles to be computed
 aggregateQuantiles = c(0.05, 0.5, 0.95)
+# should rasters with valid acquisition counts be computed?
+aggregateCounts = TRUE
 # should already computed quantile images be skipped (TRUE) or reprocessed anyway (FALSE)
 aggregateSkipExisting = TRUE
 
