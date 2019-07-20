@@ -81,7 +81,7 @@ compositeBlockSize = 2048
 compositeSkipExisting = TRUE
 
 # bands to be aggregated into quantiles
-aggregateBands = c('NDVI2')
+aggregateBands = c('NDVI2', 'NDTI2', 'MNDWI2', 'NDBI2', 'BSI2', 'BLFEI2')
 # processing block size (affects memory usage)
 aggregateBlockSize = 512
 # quantiles to be computed
