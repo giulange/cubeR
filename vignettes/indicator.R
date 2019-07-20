@@ -20,9 +20,7 @@ tiles = suppressMessages(
     imagesToTiles(rawDir, unique(ind$band)) %>%
     group_by(date, tile)
 )
-if (!all(file.exists(tiles$tileFile))) {
-  stop('missing tiles')
-}
+checkTilesExist(tiles)
 
 nOut = tiles %>% select(tile, date) %>% nrow() *  n_distinct(ind$name)
 cat(paste('Computing', nOut, 'indicator images for', n_distinct(tiles$tile, tiles$date), 'tileDates', Sys.time(), '\n'))

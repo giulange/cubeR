@@ -20,9 +20,7 @@ tiles = suppressMessages(
     group_by(period, tile, band) %>%
     arrange(period, tile, date, band)
 )
-if (!all(file.exists(tiles$tileFile))) {
-  stop('missing tiles')
-}
+checkTilesExist(tiles)
 
 cat(paste('Computing', n_groups(tiles), 'which images', Sys.time(), '\n'))
 options(cores = nCores)
