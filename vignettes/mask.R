@@ -19,9 +19,7 @@ tiles = suppressMessages(
   getCache(args['region'], args['from'], args['to'], args['cfgFile']) %>%
     imagesToTiles(rawDir, 'SCL')
 )
-if (!all(file.exists(tiles$tileFile))) {
-  stop('missing tiles')
-}
+checkTilesExist(tiles)
 
 cat(paste('Preparing', nrow(tiles) * length(maskParam), 'masks', Sys.time(), '\n'))
 options(cores = nCores)

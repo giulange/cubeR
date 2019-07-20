@@ -27,9 +27,8 @@ tiles = suppressMessages(
     group_by(period, tile, band) %>%
     arrange(period, tile, band, date)
 )
-if (!all(file.exists(tiles$tileFile)) | !all(file.exists(unique(tiles$whichFile)))) {
-  stop('missing tiles')
-}
+tmp = tibble(tileFile = c(tiles$tileFile, unique(tiles$whichFile)))
+checkTilesExist(tiles)
 
 cat(paste('Computing', n_groups(tiles), 'composites', Sys.time(), '\n'))
 options(cores = nCores)
