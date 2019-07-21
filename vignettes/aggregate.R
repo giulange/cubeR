@@ -31,6 +31,7 @@ aggregates = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine
   results = suppressMessages(prepareQuantiles(tls, periodsDir, tmpDir, paste0(cubeRpath, '/python'), aggregateQuantiles, aggregateSkipExisting, aggregateBlockSize))
   if (aggregateCounts) {
     tlsTmp = tls %>%
+      ungroup() %>%
       filter(band == first(band))
     results = results %>%
       bind_rows(suppressMessages(prepareCounts(tlsTmp, periodsDir, tmpDir, paste0(cubeRpath, '/python'), 'N2', aggregateSkipExisting, aggregateBlockSize)))
