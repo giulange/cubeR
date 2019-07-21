@@ -37,10 +37,6 @@ indicatorIndicators = list(
 )
 indicatorSkipExisting = TRUE
 
-ndviCloudmasks = c('CLOUDMASK2')
-ndviBandNames = c('NDVI3')
-ndviSkipExisting = TRUE
-
 whichBands = c('NDVI1', 'NDVI2')
 whichPrefix = 'NMAX'
 whichBlockSize = 2048
@@ -54,10 +50,11 @@ compositeBands = list(
 compositeBlockSize = 2048
 compositeSkipExisting = TRUE
 
-aggregateBands = c('NDVI2')
+aggregateBands = c('NDVI2', 'NDTI2', 'MNDWI2', 'NDBI2', 'BSI2', 'BLFEI2')
 aggregateBlockSize = 512
 aggregateQuantiles = c(0.05, 0.5, 0.95)
 aggregateCounts = TRUE
+aggregateCountsBand = 'NDVI2'
 aggregateSkipExisting = TRUE
 
 tileRawBands = character()
