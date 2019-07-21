@@ -22,19 +22,26 @@ tiles = suppressMessages(
 )
 checkTilesExist(tiles)
 
-cat(paste('Computing', n_groups(tiles), 'aggregates', Sys.time(), '\n'))
 options(cores = nCores)
+cat(paste('Computing', n_groups(tiles), 'aggregates', Sys.time(), '\n'))
 aggregates = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
   tmp = tls %>% select(period, tile, band) %>% distinct()
   cat(paste(tmp$period, tmp$tile, tmp$band, collapse = ', '), ' (', n_groups(tls), ')\n', sep = '')
-
-  results = suppressMessages(prepareQuantiles(tls, periodsDir, tmpDir, paste0(cubeRpath, '/python'), aggregateQuantiles, aggregateSkipExisting, aggregateBlockSize))
-  if (aggregateCounts) {
-    tlsTmp = tls %>%
-      filter(band == first(band))
-    results = results %>%
-      bind_rows(suppressMessages(prepareCounts(tlsTmp, periodsDir, tmpDir, paste0(cubeRpath, '/python'), 'N2', aggregateSkipExisting, aggregateBlockSize)))
-  }
-  results
+  suppressMessages(prepareQuantiles(tls, periodsDir, tmpDir, paste0(cubeRpath, '/python'), aggregateQuantiles, aggregateSkipExisting, aggregateBlockSize))
 }
 logProcessingResults(aggregates, t0)
+
+t0 = Sys.time()
+if (aggregateCounts) {
+  tiles = tiles %>%
+    ungroup %>%
+    filter(band == aggregateCountsBand) %>%
+    group_by(period, tile)
+  cat(paste('Computing', n_groups(tiles), 'counts', Sys.time(), '\n'))
+  counts = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
+    tmp = tls %>% select(period, tile) %>% distinct()
+    cat(paste(tmp$period, tmp$tile, collapse = ', '), ' (', n_groups(tls), ')\n', sep = '')
+    suppressMessages(prepareCounts(tls, periodsDir, tmpDir, paste0(cubeRpath, '/python'), 'N2', aggregateSkipExisting, aggregateBlockSize))
+  }
+}
+logProcessingResults(tiles, t0)

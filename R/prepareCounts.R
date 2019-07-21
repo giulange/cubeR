@@ -68,5 +68,7 @@ prepareCounts = function(input, targetDir, tmpDir, pythonDir, outputBandTmpl = '
       dplyr::ungroup()
   }
 
+  processed = processed %>%
+    dplyr::select(.data$period, .data$tile, .data$outBand, .data$outFile)
   return(bind_rows(processed, skipped) %>% dplyr::rename(band = .data$outBand, tileFile = .data$outFile))
 }
