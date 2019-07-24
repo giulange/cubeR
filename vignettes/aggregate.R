@@ -41,7 +41,7 @@ if (aggregateCounts) {
   counts = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
     tmp = tls %>% select(period, tile) %>% distinct()
     cat(paste(tmp$period, tmp$tile, collapse = ', '), ' (', n_groups(tls), ')\n', sep = '')
-    suppressMessages(prepareCounts(tls, periodsDir, tmpDir, paste0(cubeRpath, '/python'), 'N2', aggregateSkipExisting, aggregateBlockSize))
+    suppressMessages(prepareCounts(tls, periodsDir, tmpDir, paste0(cubeRpath, '/python'), aggregateCountsOutBand, aggregateSkipExisting, aggregateBlockSize))
   }
 }
-logProcessingResults(tiles, t0)
+logProcessingResults(counts, t0)
