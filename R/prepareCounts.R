@@ -35,7 +35,8 @@ prepareCounts = function(input, targetDir, tmpDir, pythonDir, outputBandTmpl = '
       dplyr::filter(tmp) %>%
       dplyr::select(.data$period, .data$tile, .data$outBand, .data$outFile)
     processed = processed %>%
-      dplyr::filter(!tmp)
+      dplyr::filter(!tmp) %>%
+      dplyr::mutate(processed = NA)
   }
 
   if (nrow(processed) > 0) {
@@ -69,6 +70,6 @@ prepareCounts = function(input, targetDir, tmpDir, pythonDir, outputBandTmpl = '
   }
 
   processed = processed %>%
-    dplyr::select(.data$period, .data$tile, .data$outBand, .data$outFile)
+    dplyr::select(.data$period, .data$tile, .data$outBand, .data$outFile, .data$processed)
   return(bind_rows(processed, skipped) %>% dplyr::rename(band = .data$outBand, tileFile = .data$outFile))
 }
