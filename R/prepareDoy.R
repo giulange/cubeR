@@ -1,18 +1,5 @@
-#' Generates a band storing a date within a period with maximum value of a given
-#' band.
-#' @details The date is encoded per pixel using an order of a (sorted) date
-#' within a period, e.g. if a given period for a given tile consists of three
-#' dates \code{2019-01-06, 2019-01-01 & 2019-01-11}, then \code{1} corresponds
-#' to \code{2019-01-01}, \code{2} to \code{2019-01-06} and \code{3} to
-#' {2019-01-11}.
-#'
-#' Processing is done within groups defined by \code{period & band}
-#'
-#' Processing is divided into two steps. \enumerate{ \item In the first step a
-#' maximum value among all dates in a period is computed. \item In the second
-#' step an output band is computed by comparing values at particular dates to
-#' the maximum one. If the maximum value occurs for many dates, the last date is
-#' taken. }
+#' Generates a band storing a date of year based on the "which" band values and
+#' dates extracted from file names used to compute the "which" band.
 #' @param input a data frame describing tiled images (must contain at least
 #'   columns \code{period, date, tile, band, tileFile})
 #' @param targetDir a directory where tiles should be saved (a separate
@@ -21,20 +8,23 @@
 #' @param pythonDir a directory containing the \code{which.py} python script
 #'   used to compute the output
 #' @param outBandPrefix prefix used to create the output band name(s)
+#' @param whichBandPrefix prefix used by the which band
 #' @param skipExisting should already existing images be skipped?
 #' @param blockSize processing block size used during computations - larger
 #'   block requires more memory but (generally) makes computations faster
 #' @return data frame describing generated images
 #' @export
 #' @import dplyr
-prepareWhich = function(input, targetDir, tmpDir, pythonDir, outBandPrefix, skipExisting, blockSize = 2048) {
+prepareDoy = function(input, targetDir, tmpDir, pythonDir, outBandPrefix, whichBandPrefix, skipExisting, blockSize = 2048) {
   input = input %>%
     dplyr::ungroup() %>%
     dplyr::mutate(
-      whichBand = paste0(outBandPrefix, .data$band)
+      whichBand = paste0(whichBandPrefix, .data$band),
+      doyBand = paste0(outBandPrefix, .data$band)
     ) %>%
     dplyr::mutate(
-      outFile = getTilePath(targetDir, .data$tile, .data$period, .data$whichBand)
+      whichFile = getTilePath(targetDir, .data$tile, .data$period, .data$whichBand),
+      outFile = getTilePath(targetDir, .data$tile, .data$period, .data$doyBand)
     )
 
   skipped = processed = dplyr::tibble(period = character(), tile = character(), tileFile = character())
@@ -58,7 +48,8 @@ prepareWhich = function(input, targetDir, tmpDir, pythonDir, outBandPrefix, skip
       dplyr::group_by(.data$period, .data$tile, .data$band) %>%
       dplyr::arrange(.data$period, .data$tile, .data$band, .data$date) %>%
       dplyr::summarize(
-        whichBand = first(.data$whichBand),
+        doyBand = first(.data$doyBand),
+        whichFile = first(.data$whichFile),
         outFile = first(.data$outFile),
         inputFiles = paste0(shQuote(.data$tileFile), collapse = ' ')
       ) %>% mutate(
@@ -66,8 +57,8 @@ prepareWhich = function(input, targetDir, tmpDir, pythonDir, outBandPrefix, skip
       ) %>%
       mutate(
         command = sprintf(
-          'python %s/which.py --blockSize %d %s %s && mv %s %s',
-          pythonDir, blockSize, shQuote(.data$tmpFile), .data$inputFiles, shQuote(.data$tmpFile), shQuote(.data$outFile)
+          'python %s/which2doy.py --blockSize %d %s %s %s && mv %s %s',
+          pythonDir, blockSize, shQuote(.data$tmpFile), shQuote(.data$whichFile), .data$inputFiles, shQuote(.data$tmpFile), shQuote(.data$outFile)
         )
       )
     tmpFiles = processed$tmpFile
@@ -79,7 +70,7 @@ prepareWhich = function(input, targetDir, tmpDir, pythonDir, outBandPrefix, skip
       dplyr::group_by(.data$period, .data$tile, .data$band) %>%
       do({
         system(.data$command, ignore.stdout = TRUE)
-        dplyr::as.tbl(data.frame(band = .data$whichBand, tileFile = .data$outFile, processed = TRUE, stringsAsFactors = FALSE))
+        dplyr::as.tbl(data.frame(band = .data$doyBand, tileFile = .data$outFile, processed = TRUE, stringsAsFactors = FALSE))
       }) %>%
       dplyr::ungroup()
   }

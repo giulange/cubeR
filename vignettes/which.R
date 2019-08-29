@@ -31,3 +31,15 @@ which = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bi
   suppressMessages(prepareWhich(tls, periodsDir, tmpDir, paste0(cubeRpath, '/python'), whichPrefix, whichSkipExisting, whichBlockSize))
 }
 logProcessingResults(which, t0)
+
+t0 = Sys.time()
+if (whichDoyPrefix != '') {
+  cat(paste('Computing', n_groups(tiles), 'doy-s', Sys.time(), '\n'))
+  doy = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
+    tmp = tls %>% select(period, tile, band) %>% distinct()
+    cat(paste(tmp$period, tmp$tile, tmp$band, collapse = ', '), ' (', n_groups(tls), ')\n', sep = '')
+
+    suppressMessages(prepareDoy(tls, periodsDir, tmpDir, paste0(cubeRpath, '/python'), whichDoyPrefix, whichPrefix, whichSkipExisting, whichBlockSize))
+  }
+  logProcessingResults(doy, t0)
+}

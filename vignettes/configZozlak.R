@@ -39,6 +39,7 @@ indicatorSkipExisting = TRUE
 
 whichBands = c('NDVI1', 'NDVI2')
 whichPrefix = 'NMAX'
+whichDoyPrefix = 'DOYMAX'
 whichBlockSize = 2048
 whichSkipExisting = TRUE
 

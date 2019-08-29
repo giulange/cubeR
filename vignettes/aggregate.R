@@ -43,5 +43,5 @@ if (aggregateCounts) {
     cat(paste(tmp$period, tmp$tile, collapse = ', '), ' (', n_groups(tls), ')\n', sep = '')
     suppressMessages(prepareCounts(tls, periodsDir, tmpDir, paste0(cubeRpath, '/python'), aggregateCountsOutBand, aggregateSkipExisting, aggregateBlockSize))
   }
+  logProcessingResults(counts, t0)
 }
-logProcessingResults(counts, t0)
