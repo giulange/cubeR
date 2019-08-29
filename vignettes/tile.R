@@ -36,7 +36,7 @@ for (i in seq_along(tilePeriodBands)) {
 images = imagesRaw %>%
   bind_rows(bind_rows(imagesPeriods)) %>%
   rename(period = date)
-checkTilesExist(tiles)
+checkTilesExist(images)
 
 regionFile = getCachePath(cacheTmpl, args['region'], args['from'], args['to'], cloudCov, bands, 'geojson')
 images = foreach(tls = assignToCores(images, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
