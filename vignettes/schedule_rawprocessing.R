@@ -4,25 +4,25 @@ library(dplyr)
 date2months = function(x, k = 1) {
   return(as.integer(substr(x, 1, 4)) * 12 + floor(as.integer(substr(x, 6, 7)) / k) * k - 1)
 }
-months2date = function(x) {
+months2date = function(x, k = 1) {
   return(sprintf('%04d-%02d', floor(x / 12), 1 + (x %% 12) * k))
 }
 
 S2_initialize_user('zozlak', 'alamakota')
 
-gCube = as.tbl(S2_query_granule(regionId = '%_cube')) %>%
+maxGranules = 1 # per orbit
+maxCc = 0.2
+monthMin = date2months('2019-06') #min(g$month)
+monthMax = date2months('2019-08') #max(g$month)
+
+gCube = as.tbl(S2_query_granule(regionId = '%_cube', dateMin = paste0(months2date(monthMin), '-01'))) %>%
   mutate(cube = TRUE) %>%
   select(granuleId, cube)
-gAll = as.tbl(S2_query_granule(regionId = '%_cube', cloudCovMax = 100))
+gAll = as.tbl(S2_query_granule(regionId = '%_cube', cloudCovMax = 100, dateMin = paste0(months2date(monthMin), '-01')))
 g = gAll %>%
   mutate(month = date2months(date)) %>%
   left_join(gCube)
 save(g, file = 'all_granules.RData')
-
-maxGranules = 1 # per orbit
-maxCc = 0.2
-monthMin = date2months('2019-04') #min(g$month)
-monthMax = date2months('2019-06') #max(g$month)
 
 months = data_frame(month = seq(monthMin, monthMax)) %>%
   left_join(g) %>%
@@ -52,8 +52,8 @@ months %>%
 
 maxGranules = 1 # per orbit
 maxCc = 0.2
-monthMin = date2months('2019-04') #min(g$month)
-monthMax = date2months('2019-06') #max(g$month)
+monthMin = date2months('2019-06') #min(g$month)
+monthMax = date2months('2019-08') #max(g$month)
 
 months = data_frame(month = seq(monthMin, monthMax)) %>%
   left_join(g) %>%
