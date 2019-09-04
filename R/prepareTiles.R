@@ -23,7 +23,8 @@ prepareTiles = function(input, targetDir, gridFile, tmpDir, method, skipExisting
     band = c(sprintf('B%02d', 1:12), 'B8A', 'AOT', 'CLD', 'DEM', 'PVI', 'SCL', 'SNW', 'TCI', 'VIS', 'WVP'),
     nodata = c(rep(0, 22))
   )
-  outNodata = c(LOG1S = 0, INT1S = 127, INT1U = 255, INT2S = 32767, INT2U = 65534, INT4S = 2147483647, INT4U = 4294967296, FLT4S = 3.4e+38, FLT8S = 1.7e+308)
+  sclNodata = 0
+  outNodata = c(LOG1S = 0, INT1S = 127, INT1U = 255, INT2S = 32767, INT2U = 65535, INT4S = 2147483647, INT4U = 4294967296, FLT4S = 3.4e+38, FLT8S = 1.7e+308)
 
 
   input = input %>%
@@ -52,7 +53,7 @@ prepareTiles = function(input, targetDir, gridFile, tmpDir, method, skipExisting
       dplyr::mutate(
         method = dplyr::if_else(.data$band %in% 'SCL', 'near', method),
         inNodata = dplyr::if_else(!is.na(.data$nodata), paste0('-srcnodata ', .data$nodata), ''),
-        outNodata = outNodata[raster::dataType(raster::raster(.data$tileFiles[[1]]$tileFile[1]))],
+        outNodata = dplyr::if_else(.data$band %in% 'SCL', sclNodata, outNodata[raster::dataType(raster::raster(.data$tileFiles[[1]]$tileFile[1]))]),
         tmpFile = paste0(tmpDir, '/', basename(.data$outFile))
       ) %>%
       dplyr::mutate(
