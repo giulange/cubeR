@@ -51,6 +51,6 @@ tiles = foreach(tls = assignToCores(images, nCores, chunksPerCore), .combine = b
   tmp = tls %>% select(period, tile, band) %>% distinct()
   cat(paste(tmp$period, tmp$tile, tmp$band, collapse = ', '), ' (', nrow(tls), ')\n', sep = '')
 
-  suppressMessages(prepareTiles(tls, tilesDir, gridFile, tmpDir, tileResamplingMethod, tileSkipExisting))
+  suppressMessages(prepareTiles(tls, tilesDir, gridFile, tmpDir, tileResamplingMethod, tileSkipExisting, gdalOpts = tileGdalOpts))
 }
 logProcessingResults(tiles, t0)
