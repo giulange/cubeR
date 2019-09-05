@@ -1,7 +1,7 @@
 # directory where the package was cloned
 cubeRpath = '/eodc/private/boku/software/cubeR'
 # file containing the grid (every feture must provide the TILE property)
-gridFile = '/eodc/private/boku/ACube/shapefiles/Grid_LAEA5210_100K_polygons.shp'
+gridFile = '/eodc/private/boku/ACube2/shapes/Grid_LAEA5210_100K_polygons.shp'
 # directory for storing temporary files
 tmpDir = '/eodc/private/boku/ACube2/tmp'
 # directory storing rasters before retiling
@@ -20,7 +20,7 @@ bands = c('B02', 'B03', 'B04', 'B08', 'B8A', 'B11', 'B12', 'SCL', 'LAI', 'TCI')
 # maximal accepted granules' cloud coverage
 cloudCov = 0.4
 # number of workers (cores)
-nCores = 40
+nCores = 8
 # each worker (core) is assigned chunksPerCore data chunks (generally you shouldn't need to tune this property)
 chunksPerCore = 10
 
@@ -64,8 +64,10 @@ indicatorSkipExisting = TRUE
 whichBands = c('NDVI1', 'NDVI2')
 # prefix preppended to the orignal band name to get the target "which band name"
 whichPrefix = 'NMAX'
+# prefix preppended to the orignal band name to get the "day of year with a within-a-period maximum value band name" (if empty string this indicator is not computed)
+whichDoyPrefix = 'DOYMAX'
 # processing block size (affects memory usage)
-whichBlockSize = 2048
+whichBlockSize = 1024
 # should already existing "which" images be skipped (TRUE) or reprocessed anyway (FALSE)
 whichSkipExisting = TRUE
 
@@ -81,27 +83,41 @@ compositeBlockSize = 2048
 compositeSkipExisting = TRUE
 
 # bands to be aggregated into quantiles
-aggregateBands = c('NDVI2', 'NDTI2', 'MNDWI2', 'NDBI2', 'BSI2', 'BLFEI2')
+#aggregateBands = c('NDVI2', 'NDTI2', 'MNDWI2', 'NDBI2', 'BSI2', 'BLFEI2')
+aggregateBands = c('NDVI2')
 # processing block size (affects memory usage)
 aggregateBlockSize = 512
 # quantiles to be computed
-aggregateQuantiles = c(0.05, 0.5, 0.95)
+aggregateQuantiles = c(0.05, 0.5, 0.98)
 # should rasters with valid acquisition counts be computed?
-aggregateCounts = TRUE
+aggregateCounts = FALSE
+# band which should be used to compute counts
+aggregateCountsBand = 'NDVI2'
+# counts output band name
+aggregateCountsOutBand = 'N2'
 # should already computed quantile images be skipped (TRUE) or reprocessed anyway (FALSE)
 aggregateSkipExisting = TRUE
 
 tileRawBands = character()
 tilePeriodBands = list(
-  '1 month' = c('LAI1', 'NDVI1', 'TCI1', 'LAI2', 'NDVI2', 'TCI2'),
-  '1 year' = c('NDVI2q05', 'NDVI2q50', 'NDVI2q95')
+#  '1 month' = c('LAI1', 'NDVI1', 'TCI1', 'LAI2', 'NDVI2', 'TCI2'),
+  '1 year' = c(
+    'DOYMAXNDVI2', 'NMAXNDVI2', 'DOYMAXNDVI1', 'NMAXNDVI1'
+#    'N2',
+#    'NDVI2q05',  'NDVI2q50',  'NDVI2q98',
+#    'NDTI2q05',  'NDTI2q50',  'NDTI2q95', 
+#    'MNDWI2q05', 'MNDWI2q50', 'MNDWI2q95', 
+#    'NDBI2q05',  'NDBI2q50',  'NDBI2q95', 
+#    'BSI2q05',   'BSI2q50',   'BSI2q95', 
+#    'BLFEI2q05', 'BLFEI2q50', 'BLFEI2q95'
+  )
 )
 # should already existing tiles be skipped (TRUE) or reprocessed anyway (FALSE)
 tileSkipExisting = TRUE
 # reprojection resampling algorithm - see `man gdalwap``
 tileResamplingMethod = 'near'
 # additional gdalwarp parameters used while reprojection & retiling - see `man gdalwap``
-tileGdalOpts = '-multi -wo NUM_THREADS=2 -wo "COMPRESS=DEFLATE" -wo "TILED=YES" -wo "BLOCKXSIZE=512" -wo "BLOCKYSIZE=512"'
+tileGdalOpts = '--config GDAL_CACHEMAX 4096 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
 
 # tiles to be merged into overviews
 overviewPeriodBands = list(
@@ -110,7 +126,7 @@ overviewPeriodBands = list(
 )
 overviewResolution = 100
 overviewResamplingMethod = 'bilinear'
-overviewGdalOpts = '--config GDAL_CACHEMAX 4096 -multi -wo NUM_THREADS=2 -wo "COMPRESS=DEFLATE" -wo "TILED=YES" -wo "BLOCKXSIZE=512" -wo "BLOCKYSIZE=512"'
+overviewGdalOpts = '--config GDAL_CACHEMAX 4096 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
 overviewNCores = 16
 overviewSkipExisting = TRUE
 

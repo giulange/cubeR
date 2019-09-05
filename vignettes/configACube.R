@@ -1,21 +1,21 @@
-cubeRpath = '/home/zozlak/roboty/BOKU/cube/cubeR'
-gridFile = '/home/zozlak/roboty/BOKU/cube/data/shapes/EQUI7_V13_EU_PROJ_TILE_T1.shp'
-tmpDir = '/home/zozlak/roboty/BOKU/cube/data/tmp'
-rawDir = '/home/zozlak/roboty/BOKU/cube/data/raw'
-periodsDir = '/home/zozlak/roboty/BOKU/cube/data/periods'
-tilesDir = '/home/zozlak/roboty/BOKU/cube/data/tiles'
-overviewsDir = '/home/zozlak/roboty/BOKU/cube/data/overviews'
-acubeDir = '/home/zozlak/roboty/BOKU/cube/data/acube'
-cacheTmpl = '/home/zozlak/roboty/BOKU/cube/data/cache/{region}_{dateFrom}_{dateTo}_{cloudCovMax}_{bands}'
+cubeRpath = '/eodc/private/boku/software/cubeR'
+gridFile = '/eodc/private/boku/ACube2/shapes/EQUI7_V13_EU_PROJ_TILE_T1.shp'
+tmpDir = '/eodc/private/boku/ACube2/tmp'
+rawDir = '/eodc/private/boku/ACube2/raw'
+periodsDir = '/eodc/private/boku/ACube2/periods'
+tilesDir = '/eodc/private/boku/ACube2/tiles'
+overviewsDir = '/eodc/private/boku/ACube2/overviews'
+cacheTmpl = '/eodc/private/boku/ACube2/cache/{region}_{dateFrom}_{dateTo}_{cloudCovMax}_{bands}'
+acubeDir = '/eodc/private/boku/ACube'
 
 bands = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'TCI', 'LAI', 'FAPAR', 'FCOVER', 'SCL')
-cloudCov = 0.4
-nCores = 6
+cloudCov = 0.5
+nCores = 14
 chunksPerCore = 10
 
-dwnldMethod = 'copy'
-dwnldDbParam = list(host = '127.0.0.1', port = 5433, user = 'zozlak', dbname = 'bokudata')
-dwnldMaxRemovals = 2
+dwnldMethod = 'symlink'
+dwnldMaxRemovals = 100
+dwnldDbParam = list(host = '10.250.16.131', port = 5432, user = 'eodc', dbname = 'bokudata')
 dwnldNCores = 4
 dwnldTimeout = 120
 dwnldSkipExisting = 'samesize'
@@ -34,7 +34,7 @@ indicatorSkipExisting = TRUE
 whichBands = c('NDVI2')
 whichPrefix = 'NMAX'
 whichDoyPrefix = 'DOYMAX'
-whichBlockSize = 2048
+whichBlockSize = 1024
 whichSkipExisting = TRUE
 
 compositeBands = list(
@@ -42,15 +42,15 @@ compositeBands = list(
   whichBand = c('NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2'),
   outBand   = c('B02',       'B03',       'B04',       'B05',       'B06',       'B07',       'B08',       'B8A',       'B11',       'B12',       'TCI2',      'LAI2',      'FAPAR2',    'FCOVER2')
 )
-compositeBlockSize = 2048
+compositeBlockSize = 1024
 compositeSkipExisting = TRUE
 
 tileRawBands = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'TCI', 'LAI', 'FAPAR', 'FCOVER', 'SCL', 'CLOUDMASK2')
 tilePeriodBands = list(
-  '1 month' = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'NDVI2', 'TCI2', 'LAI2', 'FAPAR2', 'FCOVER2', 'NMAXNDVI2')
+  '1 month' = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'TCI2', 'LAI2', 'FAPAR2', 'FCOVER2', 'NMAXNDVI2')
 )
 tileResamplingMethod = 'near'
-tileGdalOpts = '-multi -wo NUM_THREADS=2 -wo "COMPRESS=DEFLATE" -wo "TILED=YES" -wo "BLOCKXSIZE=512" -wo "BLOCKYSIZE=512"'
+tileGdalOpts = '--config GDAL_CACHEMAX 4096 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
 tileSkipExisting = TRUE
 
 renameBands = data.frame(

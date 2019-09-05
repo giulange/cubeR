@@ -1,5 +1,4 @@
 args = commandArgs(TRUE)
-args = c('vignettes/configACube.R', '_33UXP', '2018-03-01', '2018-04-30')
 if (length(args) < 4) {
   stop('This scripts takes parameters: settingsFilePath regionId dateFrom dateTo')
 }

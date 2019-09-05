@@ -65,7 +65,7 @@ tilePeriodBands = list(
   '1 year' = c('NDVI2q05', 'NDVI2q50', 'NDVI2q95')
 )
 tileResamplingMethod = 'near'
-tileGdalOpts = '-multi -wo NUM_THREADS=2 -wo "COMPRESS=DEFLATE" -wo "TILED=YES" -wo "BLOCKXSIZE=512" -wo "BLOCKYSIZE=500"'
+tileGdalOpts = '--config GDAL_CACHEMAX 4096 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
 tileSkipExisting = TRUE
 
 overviewPeriodBands = list(
@@ -75,5 +75,5 @@ overviewPeriodBands = list(
 overviewNCores = 6
 overviewResolution = 100
 overviewResamplingMethod = 'bilinear'
-overviewGdalOpts = '-multi -wo NUM_THREADS=2 -wo "COMPRESS=DEFLATE" -wo "TILED=YES" -wo "BLOCKXSIZE=512" -wo "BLOCKYSIZE=500"'
+overviewGdalOpts = '--config GDAL_CACHEMAX 4096 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
 overviewSkipExisting = TRUE
