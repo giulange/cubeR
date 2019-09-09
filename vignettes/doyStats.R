@@ -5,7 +5,6 @@ doyBand = '2018y1_DOYMAXNDVI2'
 maxBand = 'NDVI2q98'
 lcBand = 'LC'
 climBand = 'BIOGEO'
-outFile = '/eodc/private/boku/ACube2/tiles/doystats.csv'
 dirs = list.dirs(dir)
 dirs = dirs[nchar(basename(dirs)) == 6]
 dirs = dirs[order(dirs)]
@@ -37,7 +36,8 @@ for (tile in dirs) {
     dplyr::group_by(lc, clim, ndvi, ndvi, doy) %>%
     dplyr::summarize(count = n(), tile = basename(tile)) %>%
     dplyr::select(tile, lc, clim, ndvi, doy, count)
-  write.csv(res, outFile, row.names = FALSE, na = '', append = TRUE)
+  outFile = paste0('/eodc/private/boku/ACube2/tiles/doystats_', basename(tile), '.csv')
+  write.csv(res, outFile, row.names = FALSE, na = '')
 
   rm(lc, ndvi, mask, doy, clim, res)
   gc();gc();gc()
