@@ -39,7 +39,7 @@ mapTilesPeriods = function(tiles, period, startDate = NULL) {
   if (unit == 'year') {
     tiles$period = paste0(tiles$period, 'y', len)
   }else if (unit == 'month') {
-    tiles$period = sprintf('%d-%02dm%d', as.integer(tiles$period / 12), ifelse(tiles$period %% 12L == 0L, 12L, tiles$period %% 12L), len)
+    tiles$period = sprintf('%d-%02dm%d', as.integer((tiles$period - 1) / 12), ifelse(tiles$period %% 12L == 0L, 12L, tiles$period %% 12L), len)
   } else if (unit == 'day') {
     tiles$period = as.Date(tiles$period, origin = '1970-01-01')
     tiles$period = sprintf('%sd%d', format(tiles$period, '%Y-%j'), len)
