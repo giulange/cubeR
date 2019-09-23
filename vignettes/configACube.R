@@ -60,5 +60,6 @@ renameBands = data.frame(
   #                   bands,  TCI,      LAI/etc.,   SCL, CLOUD,         mBands,  mTCI,     mLAI/etc.
   scale =  c(rep(10000, 10),   NA,  rep(1000, 3),    NA,    NA, rep(10000, 10),    NA,  rep(1000, 3)),
   nodata = c(rep(65535, 10),  255, rep(32767, 3),     0,   255, rep(65534, 10),   255, rep(32767, 3)),
-  mask =   c( rep(TRUE, 10), TRUE,  rep(TRUE, 3), FALSE, FALSE, rep(FALSE, 10), FALSE, rep(FALSE, 3))
+  mask =   c( rep(TRUE, 10), TRUE,  rep(TRUE, 3), FALSE, FALSE, rep(FALSE, 10), FALSE, rep(FALSE, 3)),
+  stringsAsFactors = FALSE
 )

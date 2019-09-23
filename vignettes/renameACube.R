@@ -17,7 +17,8 @@ options(cores = nCores)
 
 # 1. PREPARE RASTERS LIST AND COLLECT METADATA
 tilesRaw = getCache(args['region'], args['from'], args['to'], args['cfgFile']) %>%
-  select(date, utm, granuleId) %>%
+  mutate(ab = substr(product, 1, 3)) %>%
+  select(date, utm, granuleId, ab) %>%
   distinct()
 monthEnds = c('01' = 31, '02' = 28, '03' = 31, '04' = 30, '05' = 31, '06' = 30, '07' = 31, '08' = 31, '09' = 30, '10' = 31, '11' = 30, '12' = 31)
 tilesPeriods = tilesRaw %>%
@@ -33,7 +34,7 @@ tilesPeriods = tilesRaw %>%
   ungroup()
 tiles = tilesRaw %>%
   mutate(
-    granuke = purrr::map(granuleId, function(x){x}),
+    granule = purrr::map(granuleId, function(x){x}),
     period = date,
     dateMin = date,
     dateMax = date,
@@ -50,7 +51,9 @@ tileShapes = tiles %>%
   group_by(utm) %>%
   filter(band == 'LAI2') %>%
   filter(row_number() == 1) %>%
-  mutate(tileFile = getTilePath(periodsDir, utm, period, band)) %>%
+  mutate(
+    tileFile = getTilePath(periodsDir, utm, period, band)
+  ) %>%
   select(utm, tileFile)
 regionFile = getCachePath(cacheTmpl, args['region'], args['from'], args['to'], cloudCov, bands, 'geojson')
 tileShapes = suppressMessages(mapTilesGrid(tileShapes, gridFile, regionFile)) %>%
@@ -59,6 +62,8 @@ tiles = tiles %>%
   inner_join(tileShapes) %>%
   group_by(tile, type, band, name, period, periodMin, periodMax, scale, nodata, mask) %>%
   summarize(
+    ab = coalesce(if_else(n_distinct(ab) > 1L, 'S2-', first(ab)), 'S2-'),
+    level = if_else(periodMin == periodMax, 'L2A', 'L3A'),
     dateMin = min(dateMin),
     dateMax = max(dateMax),
     granule = paste0(unique(unlist(granule)), collapse = ',')
@@ -117,7 +122,7 @@ tmp = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bind
 
 tiles = tiles %>%
   mutate(
-    targetFile = sprintf('%s/%s/%s_SEN2COR_S2A_L2A------_%s_%s_EU010M_%sT1.tif', acubeDir, name, gsub(' ', '-', sprintf('%-10s', name)), gsub('-', '', periodMin), gsub('-', '', periodMax), tile)
+    targetFile = sprintf('%s/%s/%s_SEN2COR_S2%s_L2A------_%s_%s_EU010M_%sT1.tif', acubeDir, name, gsub(' ', '-', sprintf('%-10s', name)), gsub('-', '', periodMin), gsub('-', '', periodMax), tile)
   )
 tmp = createDirs(tiles$targetFile)
 tmp = file.rename(tiles$tileFile, tiles$targetFile)
