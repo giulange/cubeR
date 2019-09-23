@@ -63,7 +63,7 @@ tiles = tiles %>%
   group_by(tile, type, band, name, period, periodMin, periodMax, scale, nodata, mask) %>%
   summarize(
     ab = coalesce(if_else(n_distinct(ab) > 1L, 'S2-', first(ab)), 'S2-'),
-    level = if_else(periodMin == periodMax, 'L2A', 'L3A'),
+    level = if_else(first(periodMin) == first(periodMax), 'L2A', 'L3A'),
     dateMin = min(dateMin),
     dateMax = max(dateMax),
     granule = paste0(unique(unlist(granule)), collapse = ',')
@@ -104,12 +104,12 @@ tiles = tiles %>%
   ungroup()
 
 # 3. Set metadata
-fixedMeta = '-mo "creator=BOKU" -mo "distanceuom=M" -mo "distancevalue=10" -mo "grid=EQUI7" -mo "log_file=" -mo "processing_software=R,gdal" -mo "processing_software_version=0" -mo "sat_product_id=S2-L2A"'
+fixedMeta = '-mo "creator=BOKU" -mo "distanceuom=M" -mo "distancevalue=10" -mo "grid=EQUI7" -mo "log_file=" -mo "processing_software=R,gdal" -mo "processing_software_version=0"'
 tmp = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
   cat('chunk\n')
   tls %>%
     mutate(
-      command = sprintf('gdal_edit.py %s -mo "equi7_tile=EU010M_%sT1" -mo "parent_data_tile=%s" -mo "scale_factor=%s" -mo "processing_date=%s" -mo "query_begin=%s" -mo "query_end=%s" -mo "time_begin=%s" -mo "time_end=%s" -mo "variable_name=%s" -mo "data_coverage=%f" -mo "cloud_coverage=%f" %s', fixedMeta, tile, granule, scale, Sys.time(), gsub('-', '', periodMin), gsub('-', '', periodMax), gsub('-', '', dateMin), gsub('-', '', dateMax), name, valid, coalesce(cloudCover, 0), shQuote(tileFile))
+      command = sprintf('gdal_edit.py %s -mo "sat_product_id=S2-%s" -mo "equi7_tile=EU010M_%sT1" -mo "parent_data_tile=%s" -mo "scale_factor=%s" -mo "processing_date=%s" -mo "query_begin=%s" -mo "query_end=%s" -mo "time_begin=%s" -mo "time_end=%s" -mo "variable_name=%s" -mo "data_coverage=%f" -mo "cloud_coverage=%f" %s', fixedMeta, level, tile, granule, scale, Sys.time(), gsub('-', '', periodMin), gsub('-', '', periodMax), gsub('-', '', dateMin), gsub('-', '', dateMax), name, valid, coalesce(cloudCover, 0), shQuote(tileFile))
     ) %>%
     group_by(row_number()) %>%
     do({
@@ -122,7 +122,7 @@ tmp = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bind
 
 tiles = tiles %>%
   mutate(
-    targetFile = sprintf('%s/%s/%s_SEN2COR_S2%s_L2A------_%s_%s_EU010M_%sT1.tif', acubeDir, name, gsub(' ', '-', sprintf('%-10s', name)), gsub('-', '', periodMin), gsub('-', '', periodMax), tile)
+    targetFile = sprintf('%s/%s/%s_SEN2COR_%s_%s------_%s_%s_EU010M_%sT1.tif', acubeDir, name, gsub(' ', '-', sprintf('%-10s', name)), ab, level, gsub('-', '', periodMin), gsub('-', '', periodMax), tile)
   )
 tmp = createDirs(tiles$targetFile)
 tmp = file.rename(tiles$tileFile, tiles$targetFile)
