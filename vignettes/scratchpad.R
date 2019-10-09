@@ -10,18 +10,20 @@ s2roi = "AU_cube"
 dateStart = "2018-05-01"
 dateEnd = "2018-05-31"
 
+# init
+system(paste('Rscript', paste0(packageDir, '/vignettes/init.R'), cfgFile, s2roi, dateStart, dateEnd, s2user, s2pswd))
 # download
-system(paste('Rscript', paste0(packageDir, '/vignettes/dwnld.R'), cfgFile, s2user, s2pswd, s2roi, dateStart, dateEnd))
+system(paste('Rscript', paste0(packageDir, '/vignettes/dwnld.R'), cfgFile, s2roi, dateStart, dateEnd))
 # prepare cloud masks
-system(paste('Rscript', paste0(packageDir, '/vignettes/mask.R'), cfgFile, s2user, s2pswd, s2roi, dateStart, dateEnd))
+system(paste('Rscript', paste0(packageDir, '/vignettes/mask.R'), cfgFile, s2roi, dateStart, dateEnd))
 # compute NDVI
-system(paste('Rscript', paste0(packageDir, '/vignettes/ndvi.R'), cfgFile, s2user, s2pswd, s2roi, dateStart, dateEnd))
+system(paste('Rscript', paste0(packageDir, '/vignettes/ndvi.R'), cfgFile, s2roi, dateStart, dateEnd))
 # compute dates with max NDVI for monthly periods
 period = '1 month'
-system(paste('Rscript', paste0(packageDir, '/vignettes/which.R'), cfgFile, s2user, s2pswd, s2roi, dateStart, dateEnd, shQuote(period)))
+system(paste('Rscript', paste0(packageDir, '/vignettes/which.R'), cfgFile, s2roi, dateStart, dateEnd, shQuote(period)))
 # prepare composites based on previously computed max NDVI dates
 period = '1 month'
 maxNdviBand = 'NMAXNDVI'
-system(paste('Rscript', paste0(packageDir, '/vignettes/composite.R'), cfgFile, s2user, s2pswd, s2roi, dateStart, dateEnd, shQuote(period), maxNdviBand))
+system(paste('Rscript', paste0(packageDir, '/vignettes/composite.R'), cfgFile, s2roi, dateStart, dateEnd, shQuote(period), maxNdviBand))
 # reproject & retile
-system(paste('Rscript', paste0(packageDir, '/vignettes/tile.R'), cfgFile, s2user, s2pswd, s2roi, dateStart, dateEnd))
+system(paste('Rscript', paste0(packageDir, '/vignettes/tile.R'), cfgFile, s2roi, dateStart, dateEnd))
