@@ -29,3 +29,55 @@ A package automating Landsupport data processing:
   `Rscript scripts/init.R myConfig.R myRegionOfInterest 2018-05-01 2018-05-31 apiLogin apiPassword`
 * Use scripts from command line, e.g. `Rscript scripts/tile.R myConfig.R myRegionOfInterest 2018-05-01 2018-05-31`.
   or use package functions interactively - see `vignettes/scratchpad.R`.
+
+### Directory structure
+
+TODO
+
+### Paralelization
+
+TODO
+
+### Tracking progress
+
+TODO
+
+### Scripts (modules)
+
+TODO
+
+### init.R
+
+TODO
+
+#### download.R
+
+TODO
+
+#### mask.R
+
+TODO
+
+#### indicator.R
+
+TODO
+
+#### which.R
+
+TODO
+
+#### composite.R
+
+TODO
+
+#### aggregate.R
+
+TODO
+
+#### cropmask.R
+
+TODO
+
+#### tile.R
+
+TODO
