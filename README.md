@@ -31,7 +31,7 @@ A package automating Landsupport data processing:
 * Make sure you have Python with numpy and gdal bindings installed.
     * In Ubuntu/Debian run `sudo apt install -y python3 python3-numpy python3-gdal`
     * In Fedora/Centos/RHEL run `sudo yum install -y python3 numpy`
-* Install gdal
+* Install gdal (version 2.4 or newer is required)
     * In Ubuntu/Debian run `sudo apt install -y python-gdal gdal-bin`
     * In Fedora/Centos/RHEL run `sudo yum install -y gdal`
 * Install R and libraries required to compile R packages
