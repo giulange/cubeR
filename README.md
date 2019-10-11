@@ -10,27 +10,55 @@ A package automating Landsupport data processing:
 
 ## Installation
 
-* Install Python 3
-    * If you are using Linux almost for sure it is already installed. If not, simply install from your distribution package.
-    * If you are using Windows installer is available at https://www.python.org/downloads/windows/
-* Install numpy
-    * If you are using Linux you should be able do it from your distribution package (e.g. `python3-numpy` package in Ubuntu/Debian).
-    * If you are using Windows `python3 -m pip install numpy` should do the job.
-* Install gdal (version 2.4 or newer) including python3 gdal bindings
-    * If you are using Linux install from a package (e.g. `gdal-bin` and `python3-gdal` on Ubuntu and Debian or `gdal` on Fedora).
-    * If you are using Windows either use precompiled binaries available trough [eo4w](https://trac.osgeo.org/osgeo4w/wiki/WikiStart) or [gisinternals](http://www.gisinternals.com/release.php) (easy option) or build from source (advanced option).
-* Install the package itself
-  ```r
-  install.packages('devtools')
-  devtools::install_github('IVFL-BOKU/landsupport')
-  ```
+* Clone this repo.
+* Assure you have proper runtime environment - see below.
+
+### Windows
+
+* Install Python 2 or 3 (installers are available at https://www.python.org/downloads/windows/)
+* Install Numpy - run `python -m pip install numpy` or `python3 -m pip install numpy` in the console (depending on your Python version)
+* Install gdal (version 2.4 or newer) including Python gdal bindings.
+  Binary installers are available trough [eo4w](https://trac.osgeo.org/osgeo4w/wiki/WikiStart) and [gisinternals](http://www.gisinternals.com/release.php).
+  If you want, you can also compile from source (https://github.com/OSGeo/gdal)
+* Install R packages. In R run:
+    ```r
+    install.packages('devtools')
+    devtools::install_github('IVFL-BOKU/sentinel2')
+    devtools::install_github('IVFL-BOKU/landsupport')
+    ```
+### Linux
+
+* Make sure you have Python with numpy and gdal bindings installed.
+    * In Ubuntu/Debian run `sudo apt install -y python3 python3-numpy python3-gdal`
+    * In Fedora/Centos/RHEL run `sudo yum install -y python3 numpy`
+* Install gdal
+    * In Ubuntu/Debian run `sudo apt install -y python-gdal gdal-bin`
+    * In Fedora/Centos/RHEL run `sudo yum install -y gdal`
+* Install R and libraries required to compile R packages
+    * In Ubuntu/Debian run `sudo apt install -y r-base libxml2-dev libssl-dev libcurl4-openssl-dev libgdal-dev libudunits2-dev`
+    * In Fedora/Centos/RHEL run `sudo yum install -y R-core libxml2-devel libcurl-devel openssl-devel gdal-devel udunits2-devel`
+* Install R packages. In R run:
+    ```r
+    install.packages('devtools')
+    devtools::install_github('IVFL-BOKU/sentinel2')
+    devtools::install_github('IVFL-BOKU/landsupport')
+    ```
+
+### Docker
+
+* Build a Docker image with `cd {thisRepositoryDirectory} && docker build -t cubeR docker`
+* Run the a Docker container `docker run -ti cubeR`.
+  The package code is in `/root/landsupport` directory.
+  (please consult the [Docker run documentation](https://docs.docker.com/engine/reference/run/) for more advanced settings, e.g. mapping host directories into the container, etc.)
 
 ## Usage
 
+(all paths are relative to the repository location)
+
 * Prepare you own config files based on `scripts/config/configEodc.R`.
-* Create source data index for a given config, region of interest and time period by running the ` from scripts/init.R` from a command line, e.g. 
+* Create source data index for a given config, region of interest and time period by running the `scripts/init.R` from a command line, e.g. 
   `Rscript scripts/init.R myConfig.R myRegionOfInterest 2018-05-01 2018-05-31 apiLogin apiPassword`
-* Use scripts from command line, e.g. `Rscript scripts/tile.R myConfig.R myRegionOfInterest 2018-05-01 2018-05-31`.
+* Use scripts from command line, e.g. `Rscript scripts/tile.R myConfig.R myRegionOfInterest 2018-05-01 2018-05-31`
   or use package functions interactively - see `vignettes/scratchpad.R`.
 
 ### Directory structure
@@ -84,3 +112,4 @@ TODO
 #### tile.R
 
 TODO
+

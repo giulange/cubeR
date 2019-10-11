@@ -15,9 +15,8 @@
 #' @export
 prepareCounts = function(input, targetDir, tmpDir, pythonDir, outputBandTmpl = '%scount', skipExisting = TRUE, blockSize = 512) {
   processed = input %>%
-    dplyr::group_by(.data$period, .data$tile, .data$band) %>%
-    tidyr::nest(.data$tileFile, .key = 'input') %>%
     dplyr::ungroup() %>%
+    tidyr::nest(input = one_of('tileFile', 'date')) %>%
     dplyr::mutate(
       outBand = sprintf(outputBandTmpl, .data$band)
     ) %>%
