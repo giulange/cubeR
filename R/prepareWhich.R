@@ -66,7 +66,7 @@ prepareWhich = function(input, targetDir, tmpDir, pythonDir, outBandPrefix, skip
       ) %>%
       mutate(
         command = sprintf(
-          'python %s/which.py --blockSize %d %s %s && mv %s %s',
+          'python3 %s/which.py --blockSize %d %s %s && mv %s %s',
           pythonDir, blockSize, shQuote(.data$tmpFile), .data$inputFiles, shQuote(.data$tmpFile), shQuote(.data$outFile)
         )
       )
