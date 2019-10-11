@@ -83,7 +83,7 @@ while px < src[0].RasterXSize:
         # go back to the [bsy, bsx, quantile] format and write output
         dataDst = dataDst.reshape((len(args.q), bsy, bsx))
 
-        for i in xrange(len(args.q)):
+        for i in range(len(args.q)):
             dstBands[i].WriteArray(dataDst[i, :, :], px, py)
 
         py += bsy

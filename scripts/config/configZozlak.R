@@ -24,7 +24,7 @@ maskParam = list(
   list(bandName = 'CLOUDMASK1', minArea = 9L, bufferSize = 5L, invalidValues = c(0L:3L, 7L:11L), bufferedValues = c(3L, 8L:10L)),
   list(bandName = 'CLOUDMASK2', minArea = 0L, bufferSize = 0L, invalidValues = c(0L:3L, 7L:11L), bufferedValues = integer())
 )
-maskSkipExisting = TRUE
+maskSkipExisting = FALSE
 
 indicatorIndicators = list(
   list(bandName = 'NDVI1',  resolution = 10, mask = 'CLOUDMASK1', factor = 10000, bands = c('A' = 'B08', 'B' = 'B04'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
@@ -35,13 +35,13 @@ indicatorIndicators = list(
   list(bandName = 'BSI2',   resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B12', 'B' = 'B04', 'C' = 'B8A', 'D' = 'B02'), equation = '((A.astype(float) + B) - (C + D) ) / (0.0000001 + A + B + C + D)'),
   list(bandName = 'BLFEI2', resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B03', 'B' = 'B04', 'C' = 'B12', 'D' = 'B11'), equation = '((A.astype(float) + B + C) / 3 - D) / (0.0000001 + (A + B + C) / 3 + D)')
 )
-indicatorSkipExisting = TRUE
+indicatorSkipExisting = FALSE
 
 whichBands = c('NDVI1', 'NDVI2')
 whichPrefix = 'NMAX'
 whichDoyPrefix = 'DOYMAX'
 whichBlockSize = 2048
-whichSkipExisting = TRUE
+whichSkipExisting = FALSE
 
 compositeBands = list(
   band      = c('NDVI1',     'LAI',       'TCI',       'NDVI2',     'LAI',       'TCI'),
@@ -49,7 +49,7 @@ compositeBands = list(
   outBand   = c('NDVI1',     'LAI1',      'TCI1',      'NDVI2',     'LAI2',      'TCI2')
 )
 compositeBlockSize = 2048
-compositeSkipExisting = TRUE
+compositeSkipExisting = FALSE
 
 aggregateBands = c('NDVI2', 'NDTI2', 'MNDWI2', 'NDBI2', 'BSI2', 'BLFEI2')
 aggregateBlockSize = 512
@@ -57,7 +57,7 @@ aggregateQuantiles = c(0.05, 0.5, 0.95)
 aggregateCounts = TRUE
 aggregateCountsBand = 'NDVI2'
 aggregateCountsOutBand = 'N2'
-aggregateSkipExisting = TRUE
+aggregateSkipExisting = FALSE
 
 tileRawBands = character()
 tilePeriodBands = list(
@@ -66,7 +66,7 @@ tilePeriodBands = list(
 )
 tileResamplingMethod = 'near'
 tileGdalOpts = '--config GDAL_CACHEMAX 4096 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
-tileSkipExisting = TRUE
+tileSkipExisting = FALSE
 
 overviewPeriodBands = list(
   '1 month' = c('LAI1',    'LAI2', 'NDVI1', 'NDVI2', 'TCI1', 'TCI2'),
@@ -76,4 +76,4 @@ overviewNCores = 6
 overviewResolution = 100
 overviewResamplingMethod = 'bilinear'
 overviewGdalOpts = '--config GDAL_CACHEMAX 4096 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
-overviewSkipExisting = TRUE
+overviewSkipExisting = FALSE

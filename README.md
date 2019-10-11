@@ -10,11 +10,14 @@ A package automating Landsupport data processing:
 
 ## Installation
 
-* Install Python
+* Install Python 3
     * If you are using Linux almost for sure it is already installed. If not, simply install from your distribution package.
     * If you are using Windows installer is available at https://www.python.org/downloads/windows/
-* Install gdal
-    * If you are using Linux install from a package (e.g. `gdal-bin` and `python-gdal` on Ubuntu and Debian or `gdal` on Fedora).
+* Install numpy
+    * If you are using Linux you should be able do it from your distribution package (e.g. `python3-numpy` package in Ubuntu/Debian).
+    * If you are using Windows `python3 -m pip install numpy` should do the job.
+* Install gdal (version 2.4 or newer) including python3 gdal bindings
+    * If you are using Linux install from a package (e.g. `gdal-bin` and `python3-gdal` on Ubuntu and Debian or `gdal` on Fedora).
     * If you are using Windows either use precompiled binaries available trough [eo4w](https://trac.osgeo.org/osgeo4w/wiki/WikiStart) or [gisinternals](http://www.gisinternals.com/release.php) (easy option) or build from source (advanced option).
 * Install the package itself
   ```r

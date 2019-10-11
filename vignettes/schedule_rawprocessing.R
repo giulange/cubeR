@@ -8,7 +8,7 @@ months2date = function(x, k = 1) {
   return(sprintf('%04d-%02d', floor(x / 12), 1 + (x %% 12) * k))
 }
 
-S2_initialize_user('zozlak', 'alamakota')
+S2_initialize_user('landsupport', 'CbYwN9cNvp')
 
 maxGranules = 1 # per orbit
 maxCc = 0.2

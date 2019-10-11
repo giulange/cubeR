@@ -96,7 +96,7 @@ command = paste0('gdalbuildvrt -input_file_list ', shQuote(paste0(vrtFile, '.in'
 system(command)
 unlink(paste0(vrtFile, '.in'))
 # --maxZoom 10 --minZoom 0 --verbose
-command = sprintf('python python/xyz.py --algorithm near %s %s', vrtFile, xyzDir)
+command = sprintf('python3 python/xyz.py --algorithm near %s %s', vrtFile, xyzDir)
 system(command)
 
 #####

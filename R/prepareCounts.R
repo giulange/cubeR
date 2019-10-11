@@ -50,7 +50,7 @@ prepareCounts = function(input, targetDir, tmpDir, pythonDir, outputBandTmpl = '
       ) %>%
       dplyr::mutate(
         command = sprintf(
-          'python %s/sum.py --blockSize %d --binary --includeZero %s %s && mv %s %s',
+          'python3 %s/sum.py --blockSize %d --binary --includeZero %s %s && mv %s %s',
           pythonDir, blockSize, .data$tmpFile, .data$inFilesFile, .data$tmpFile, .data$outFile
         )
       )

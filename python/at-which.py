@@ -27,7 +27,7 @@ for i in args.inputFile:
     tmp = gdal.Open(i)
     src.append(tmp)
     tmpBands = []
-    for j in xrange(tmp.RasterCount):
+    for j in range(tmp.RasterCount):
         tmpBands.append(tmp.GetRasterBand(j + 1))
     srcBands.append(tmpBands)
 nBands = len(srcBands[0])
@@ -42,7 +42,7 @@ dst = driver.Create(args.outFile, src[0].RasterXSize, src[0].RasterYSize, nBands
 dst.SetGeoTransform(src[0].GetGeoTransform())
 dst.SetProjection(src[0].GetProjection())
 dstBands = []
-for i in xrange(nBands):
+for i in range(nBands):
     tmpBand = dst.GetRasterBand(i + 1)
     if nodata is not None:
         tmpBand.SetNoDataValue(nodata)
@@ -62,10 +62,10 @@ while px < src[0].RasterXSize:
         dataWhich = whichBand.ReadAsArray(px, py, bsx, bsy)
         # dataWhich has shape (bsy, bsx)!
 
-        for band in xrange(nBands):
+        for band in range(nBands):
             dataDst = numpy.zeros((bsy, bsx))
 
-            for i in xrange(len(srcBands)):
+            for i in range(len(srcBands)):
                 dataSrc = srcBands[i][band].ReadAsArray(px, py, bsx, bsy)
                 dataDst = dataDst + dataSrc * (dataWhich == i)
        
