@@ -14,9 +14,8 @@
 #' @export
 prepareQuantiles = function(input, targetDir, tmpDir, pythonDir, quantiles, skipExisting = TRUE, blockSize = 512) {
   input = input %>%
-    dplyr::group_by(.data$period, .data$tile, .data$band) %>%
-    tidyr::nest(.data$tileFile, .key = 'input') %>%
-    dplyr::ungroup()
+    dplyr::ungroup() %>%
+    tidyr::nest(input = tidyr::one_of('tileFile', 'date'))
   output = input %>%
     dplyr::select(.data$period, .data$tile, .data$band) %>%
     dplyr::mutate(x = 1L) %>%
@@ -34,7 +33,7 @@ prepareQuantiles = function(input, targetDir, tmpDir, pythonDir, quantiles, skip
       nMissing = n() - sum(file.exists(.data$outFile))
     ) %>%
     dplyr::group_by(.data$period, .data$tile, .data$band, .data$nMissing) %>%
-    tidyr::nest(.data$outBand, .data$tmpFile, .data$outFile, .key = 'output') %>%
+    tidyr::nest(output = tidyr::one_of('outBand', 'tmpFile', 'outFile')) %>%
     dplyr::ungroup()
   input = input %>%
     dplyr::inner_join(output)
@@ -64,7 +63,7 @@ prepareQuantiles = function(input, targetDir, tmpDir, pythonDir, quantiles, skip
       ) %>%
       dplyr::mutate(
         command = sprintf(
-           'python %s/quantiles.py --blockSize %d --mode precise %s %s --q %s',
+           'python3 %s/quantiles.py --blockSize %d --mode precise %s %s --q %s',
            pythonDir, blockSize, .data$outFileTmpl, .data$inFilesFile, paste0(quantiles, collapse = ' ')
         )
       )

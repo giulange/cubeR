@@ -1,4 +1,4 @@
-args = c("vignettes/configZozlak.R", "zozlak", "alamakota", "AU_cube", "2018-05-01", "2018-05-31", "1 month", "NMAXNDVI")
+args = c("scripts/config/configZozlak.R", "zozlak", "alamakota", "AU_cube", "2018-05-01", "2018-05-31", "1 month", "NMAXNDVI")
 names(args) = c('cfgFile', 'user', 'pswd', 'region', 'from', 'to')
 source(args[1])
 
@@ -12,9 +12,9 @@ stat = list()
 ready = list()
 for (i in seq_along(roi)) {
   cat(i, '\n')
-  stat[[length(stat) + 1]] = S2_query_granule(atmCorr = TRUE, regionId = roi[i], dateMin = '2016-01-01', dateMax = '2018-12-31', cloudCovMin = 0, cloudCovMax = cloudCov * 100) %>%
+  stat[[length(stat) + 1]] = S2_query_granule(regionId = roi[i], dateMin = '2016-01-01', dateMax = '2019-09-30', cloudCovMin = 0, cloudCovMax = cloudCov * 100) %>%
     mutate(roi = roi[i])
-  ready[[length(ready) + 1]] = getImages(roi[i], '2016-01-01', '2018-12-31', cloudCov, rawDir, bands) %>%
+  ready[[length(ready) + 1]] = getImages(roi[i], '2016-01-01', '2019-09-30', cloudCov, rawDir, bands) %>%
     mutate(roi = roi[i])
 }
 stat = bind_rows(stat)
@@ -22,9 +22,10 @@ ready = bind_rows(ready)
 save(stat, ready, file = 'vignettes/estimating_time.RData')
 load('vignettes/estimating_time.RData')
 stat = stat %>%
-  select(granuleId, date, utm, orbit, cloudCov, processDate, roi) %>%
+  select(granuleId, date, utm, orbit, cloudCov, processDate, roi, atmCorr) %>%
   mutate(date = substr(date, 1, 10))
 ready = ready %>%
+  filter(atmCorr > 0) %>%
   select(granuleId, date, utm, orbit, cloudCov, roi) %>%
   distinct() %>%
   mutate(date = substr(date, 1, 10))
@@ -32,7 +33,7 @@ ready = ready %>%
 # NUMBER OF GRANULES PER CUBE PER YEAR
 stat %>%
   mutate(year = substr(date, 1, 4)) %>%
-  group_by(roi, year) %>%
+  group_by(roi, year, atmCorr) %>%
   summarize(nn = n_distinct(utm), n = n_distinct(date, utm)) %>%
   arrange(year, roi)
 stat %>%

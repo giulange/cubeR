@@ -1,8 +1,8 @@
 devtools::load_all()
 
 # don't forget to adjust the config file content
-packageDir = '~/roboty/BOKU/cube/cubeR'
-cfgFile = "~/roboty/BOKU/cube/cubeR/scripts/config/configZozlak.R"
+packageDir = '/home/zozlak/roboty/BOKU/cube/cubeR'
+cfgFile = "/home/zozlak/roboty/BOKU/cube/cubeR/scripts/config/configZozlak.R"
 s2user = "zozlak"
 s2pswd = "xxx"
 s2roi = "_33UXP"

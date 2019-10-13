@@ -56,7 +56,7 @@ while px < src[0].RasterXSize:
         dataSrc[nodataMask] = numpy.iinfo(dataSrc.dtype).min
         dataMax = dataSrc.max(0)
         dataDst = numpy.zeros(dataSrc.shape, numpy.uint8)
-        for i in xrange(len(srcBands)):
+        for i in range(len(srcBands)):
             dataDst[i, :, :] = numpy.where(dataSrc[i, :, :] == dataMax, i, nodataDst)
         del dataSrc, dataMax
         dataDst[nodataMask] = nodataDst
