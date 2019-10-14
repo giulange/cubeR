@@ -6,5 +6,5 @@
 ^vignettes/.*xml$
 ^python$
 ^scripts$
-^docs$
+^wiki$
 
