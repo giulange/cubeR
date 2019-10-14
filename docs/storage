@@ -1,0 +1,24 @@
+### Directory structure
+
+#### Main directories
+
+* *RawDir* stores data following Sentinel 2 grid and acquisition dates. It includes Sentinel 2 L2A data (acquired during the *download* step) as well as masks and indicators computed during *mask* and *indicator* steps.
+* *PeriodsDir* stores data on the Sentinel 2 grid aggregated to broader time periods (e.g. monthly and yearly aggregates). These data come from *aggregate*, *which*, *composite* and *cropmask* steps.
+* *TilesDir* stores data reprojected and retiled to the target grid - results of the *tile* step.
+
+Within each directory data are organized according to the tiling grid with every tile having corresponding cubdirectory.
+
+#### File names
+
+Data are stored as raster files (JPEG2000 for Sentinel L2A data, TIFF for data computed by the package) using a `{date/period}_{tile}.tif` naming scheme. The `{date/period}` is:
+
+* either an acquisition date in the `YYYY-MM-DD` format 
+* or a period in the `{date}{length}` format, e.g.
+  `2018y1` - 1 year period for year 2018
+  `2017-04m1` - monthly period for April 2017
+
+#### Suplementary directories
+
+* *TmpDir* stores temporary data. For performance reasons (all the output data firstly computed in it and then moved to a target location) it is good to keep it on the same drive/partition than the main data storage directories.
+* *CacheDir* stores data available for a given processing chain (see the *init* step description).
+

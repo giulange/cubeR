@@ -1,6 +1,8 @@
 # cubeR
 
-A package automating Landsupport data processing:
+A package automating Landsupport data processing.
+
+
 
 * S2 images download (from the s2.boku.eodc.eu) (`vignettes/dwnld.R`)
 * cloud mask generation (`vignettes/mask.R` / `prepareMasks()`)
@@ -57,7 +59,9 @@ A package automating Landsupport data processing:
 
 * Prepare you own config files based on `scripts/config/configEodc.R`.
 * Create source data index for a given config, region of interest and time period by running the `scripts/init.R` from a command line, e.g. 
-  `Rscript scripts/init.R myConfig.R myRegionOfInterest 2018-05-01 2018-05-31 apiLogin apiPassword`
+    ```
+    Rscript scripts/init.R myConfig.R myRegionOfInterest 2018-05-01 2018-05-31 apiLogin apiPassword
+    ```
 * Use scripts from command line, e.g. `Rscript scripts/tile.R myConfig.R myRegionOfInterest 2018-05-01 2018-05-31`
   or use package functions interactively - see `vignettes/scratchpad.R`.
 
@@ -75,15 +79,99 @@ TODO
 
 TODO
 
+##### Command line arguments
+
+A standard set of `configFilePath`, `regionName`, `startDate` and `endDate`.
+
+##### Data input/output
+
+Stores downloaded data in the `rawDir`.
+
+##### Performance
+
+TODO
+
+##### Configuration
+
+TODO
+
 #### mask.R
+
+Computes valid pixels mask based on the Sentinel 2 L2A SCL band.
+
+##### Command line arguments
+
+A standard set of `configFilePath`, `regionName`, `startDate` and `endDate`.
+
+##### Data input/output
+
+Reads data from the `rawDir` and stores results into the `rawDir`.
+
+##### Performance
+
+TODO
+
+##### Configuration
 
 TODO
 
 #### indicator.R
 
-TODO
+Technically it is a wrapper for the [gdal_calc](https://gdal.org/programs/gdal_calc.html) taking care of running it in parallel and some data preparation steps.
+
+Used to compute indicators which can be expressed (and effectively computed) using a single numpy expression.
+
+##### Command line arguments
+
+A standard set of `configFilePath`, `regionName`, `startDate` and `endDate`.
+
+##### Data input/output
+
+Reads data from the `rawDir` and stores results into the `rawDir`.
+
+##### Performance
+
+Depending on the `equation` complexity (see the configuration section below) the performance bottleneck may be either storage speed (simple equations) or CPU (complex ones).
+
+##### Configuration
+
+* `indicatorSkipExisting` allowing to skip computations of already existing output images.
+* `indicatorIndicators` configuration property being a list of indicators to be computed. Each indicator is described by:
+    * `bandName` output band/indicator name, e.g. `NDVI`.
+    * `resolution` output data resolution. If some input rasters are in a different resolution, they will be automatically resampled.
+    * `mask` name of a band to be used as a valid pixels mask.
+    * `factor` output data scalling factor. Output data are saved using the 2B integer type (values ranging from -32768 to 32767). The `factor` parameter allows to rescale values coming from the `equation` computations into this range, e.g. for NDVI `10000` is a good `factor`.
+    * `bands` list of input bands/indicators. Should be a named vector with every band/indicator denoted by a single capital letter, e.g. `c('A' = 'B04', 'B' = 'B08')`.
+    * `equation` a numpy equation computing the indicator. Remember that:
+        * If input data are integers you may need to cast the to floats to avoid strange results (e.g. getting only value of 0 while computing an NDVI), e.g. `(A.astype(float) - B) / (+ A + B)`.
+        * Make sure you will never divide by zero. Add a neglectably small constant when needed, e.g. `'(A.astype(float) - B) / (0.0000001 + A + B)`.
+
+A complete configuration for computing an NDVI (at a 10 m resolution and using a mask named `CLOUDMASK`) looks as follows:
+```r
+indicatorSkipExisting = TRUE
+indicatorIndicators = list(
+  list(bandName = 'NDVI',  resolution = 10, mask = 'CLOUDMASK', factor = 10000, bands = c('A' = 'B04', 'B' = 'B08'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)')
+)
+```
 
 #### which.R
+
+TODO
+
+##### Command line arguments
+
+* A standard set of `configFilePath`, `regionName`, `startDate` and `endDate`.
+* A `period` argument specifying the aggregation period. Period description consists of a number and a period type name (`day`, `month` or `year`), e.g. `1 year` or `10 days`. Period type name can be also provided in plural, e.g. `2 months`.
+
+##### Data input/output
+
+Reads data from the `rawDir` and stores results into the `periodsDir`.
+
+##### Performance
+
+This processing step consists of very simple computations and depends mostly on the storage performance.
+
+##### Configuration
 
 TODO
 
@@ -91,7 +179,41 @@ TODO
 
 TODO
 
+##### Command line arguments
+
+* A standard set of `configFilePath`, `regionName`, `startDate` and `endDate`.
+* A `period` argument specifying the aggregation period. Period description consists of a number and a period type name (`day`, `month` or `year`), e.g. `1 year` or `10 days`. Period type name can be also provided in plural, e.g. `2 months`.
+
+##### Data input/output
+
+Reads data from both `rawDir` and `periodsDir` (*which* files) and stores results into the `periodsDir`.
+
+##### Performance
+
+TODO
+
+##### Configuration
+
+TODO
+
 #### aggregate.R
+
+TODO
+
+##### Command line arguments
+
+* A standard set of `configFilePath`, `regionName`, `startDate` and `endDate`.
+* A `period` argument specifying the aggregation period. Period description consists of a number and a period type name (`day`, `month` or `year`), e.g. `1 year` or `10 days`. Period type name can be also provided in plural, e.g. `2 months`.
+
+##### Data input/output
+
+Reads data from both `rawDir` and stores results into the `periodsDir`.
+
+##### Performance
+
+TODO
+
+##### Configuration
 
 TODO
 
@@ -99,7 +221,39 @@ TODO
 
 TODO
 
+##### Command line arguments
+
+A standard set of `configFilePath`, `regionName`, `startDate` and `endDate`.
+
+##### Data input/output
+
+TODO
+
+##### Performance
+
+TODO
+
+##### Configuration
+
+TODO
+
 #### tile.R
+
+TODO
+
+##### Command line arguments
+
+A standard set of `configFilePath`, `regionName`, `startDate` and `endDate`.
+
+##### Data input/output
+
+Reads data from both `rawDir` and `periodsDir` and stores results into the `tilesDir`.
+
+##### Performance
+
+TODO
+
+##### Configuration
 
 TODO
 
@@ -115,7 +269,12 @@ Within each directory data are organized according to the tiling grid with every
 
 #### File names
 
-Data are stored as raster files (JPEG2000 for Sentinel L2A data, TIFF for data computed by the package) using a **{date/period}_{tile}.tif** naming scheme. The *{date/period}* is other an acquisition date in the *YYYY-MM-DD* format or a period in the *{date}{length}* format (e.g. *2018y1* - 1 year period for year 2018, *2017-04m1* - monthly period for April 2017).
+Data are stored as raster files (JPEG2000 for Sentinel L2A data, TIFF for data computed by the package) using a `{date/period}_{tile}.tif` naming scheme. The `{date/period}` is:
+
+* either an acquisition date in the `YYYY-MM-DD` format 
+* or a period in the `{date}{length}` format, e.g.
+  `2018y1` - 1 year period for year 2018
+  `2017-04m1` - monthly period for April 2017
 
 #### Suplementary directories
 
@@ -124,18 +283,20 @@ Data are stored as raster files (JPEG2000 for Sentinel L2A data, TIFF for data c
 
 ### Paralelization
 
-All processing steps can be run in parallel. The number of parallel tasks is controlled by the __*nCores*__ configuration parameter.
+All processing steps can be run in parallel. The number of parallel tasks is controlled by the `nCores` configuration parameter.
 
 While processing in parallel you must assure **enough memory is available.**
 Memory consumption rises lineary with the number of parallel tasks.
 Different processing steps may have diffent memory requirements but they can always be tuned using configuration settings:
 
-* __*{step}BlockSize*__ Memory consumption is proportional to the square of the block size. Large blocks speed up computations but if rasters are saved using *-co "TILED=YES" -co "BLOCKXSIZE={N}" -co "BLOCKYSIZE={N}"* gdal creation options (see *{step}gdalOpts* configuration parameters) rising it above *{N}* will give neglectable gains (also in such a case the block size should be a multiple of *{N}*). In most cases value of 512 should do the job. See the remark below.
-* __*{step}GdalOpts*__ The *--config  GDAL_CACHEMAX {cacheSize}* gdal option (see discussion of the *GDAL_CACHEMAX* on the [gdal wiki](https://trac.osgeo.org/gdal/wiki/ConfigOptions)) should not exceed amount of available memory divided by the number of parallel tasks.
+* `{step}BlockSize` Memory consumption is proportional to the square of the block size. Large blocks speed up computations but if rasters are saved using `-co "TILED=YES" -co "BLOCKXSIZE={N}" -co "BLOCKYSIZE={N}"` gdal creation options (see `{step}gdalOpts` configuration parameter) rising it above `{N}` will give neglectable gains (also in such a case the block size should be a multiple of `{N}`).
+  In most cases value of 512 should do the job. 
+  See also the remark below.
+* `{step}GdalOpts` The `--config  GDAL_CACHEMAX {cacheSize}` gdal option (see discussion of the `GDAL_CACHEMAX` on the [gdal wiki](https://trac.osgeo.org/gdal/wiki/ConfigOptions)) should not exceed amount of available memory divided by the number of parallel tasks.
 
 Remarks:
 
-* **Leave some memory for the operating system I/O cache.** Computations performed by this package are very I/O intensive and for an effective I/O the operating system must be able to allocate an I/O cache in the memory. While choosing the right *{step}BlockSize* and *GDAL_CACHEMAX* values please make sure there will be a gigabyte or two of memory left per parallel process which the operating system can use for the I/O cache.
+* **Leave some memory for the operating system I/O cache.** Computations performed by this package are very I/O intensive and for an effective I/O the operating system must be able to allocate an I/O cache in the memory. While choosing the right `{step}BlockSize` and `GDAL_CACHEMAX` values please make sure there will be a gigabyte or two of memory left per parallel process which the operating system can use for the I/O cache.
 * Only actual computations are parallelized. Every processing step includes also an initialization phase where a set of required input and output data is computed and it is checked if all input data are available. This phase in run as a single process. While compering to the actual computations it takes neglectable amounts of time it can be still up to dozen of minutes for huge processing tasks (it depends mostly on the storage performance).
 
 ### Logging and progress tracking
@@ -145,7 +306,7 @@ Every processing step emits logs on the standard output and standard error. The 
 * The first line contains sums up the processing task - the script being run, parameters passed to it and a timestamp.
 * The second line contains the total number of output products to be produced.
 * Following lines report processing progress.
-  The number of lines depends on *nCores* and *chunksPerCore* configuration properties.
+  The number of lines depends on `nCores` and `chunksPerCore` configuration properties.
   Basically output products list is divided into `nCores * chunksPerCore` chunks which are then assigned to `nCores` parallel jobs.
   Every time a job picks up a next chunk it prints a log line describing which output products are contained in the chunk.
 * The last line contains a processing summary:
