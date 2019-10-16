@@ -37,6 +37,10 @@ which = gdal.Open(args.whichFile)
 whichBand = which.GetRasterBand(1)
 nodataWhich = whichBand.GetNoDataValue()
 
+for i in src:
+    if i.RasterXSize != which.RasterXSize or i.RasterYSize != which.RasterYSize:
+        raise Exception('Source files dimentions do not match')
+
 driver = gdal.GetDriverByName('GTiff')
 dst = driver.Create(args.outFile, src[0].RasterXSize, src[0].RasterYSize, nBands, srcBands[0][0].DataType, args.formatOptions)
 dst.SetGeoTransform(src[0].GetGeoTransform())
