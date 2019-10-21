@@ -23,7 +23,7 @@ save(stat, ready, file = 'vignettes/estimating_time.RData')
 load('vignettes/estimating_time.RData')
 stat = stat %>%
   select(granuleId, date, utm, orbit, cloudCov, processDate, roi, atmCorr) %>%
-  mutate(date = substr(date, 1, 10))
+  mutate(date = substr(date, 1, 10), year = substr(date, 1, 4), month = substr(date, 6, 7))
 ready = ready %>%
   filter(atmCorr > 0) %>%
   select(granuleId, date, utm, orbit, cloudCov, roi) %>%
@@ -33,7 +33,7 @@ ready = ready %>%
 # NUMBER OF GRANULES PER CUBE PER YEAR
 stat %>%
   mutate(year = substr(date, 1, 4)) %>%
-  group_by(roi, year, atmCorr) %>%
+  group_by(roi, year) %>%
   summarize(nn = n_distinct(utm), n = n_distinct(date, utm)) %>%
   arrange(year, roi)
 stat %>%
