@@ -15,6 +15,8 @@ registerDoParallel()
 
 S2_initialize_user(args['user'], args['pswd'])
 
+cat(sprintf('%s\n', 'I am here!'))
+
 images = getCache(args['region'], args['from'], args['to'], args['cfgFile']) %>%
   arrange(date, band)
 cat('Downloading\n')
