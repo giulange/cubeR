@@ -27,7 +27,8 @@ prepareIndicators = function(input, targetDir, tmpDir, indicators, skipExisting 
     ) %>%
     dplyr::mutate(
       outFile = getTilePath(targetDir, .data$tile, .data$date, .data$outBand)
-    )
+    ) %>%
+    ungroup()
 
   skipped = dplyr::tibble(tileFile = character())
   if (skipExisting) {
