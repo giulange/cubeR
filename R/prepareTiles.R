@@ -11,8 +11,8 @@
 #' @param method resampling method (near, bilinear, cubic, cubicspline, lanczos,
 #'   average, mode, max, min, med, q1, q3 - see gdalwarp doc)
 #' @param skipExisting should already existing tiles be skipped?
-#' @param gdalOpts additional gdalwarp options, e.g. enabling multithreading
-#' @return data frame describing created tiles
+#' @param gdalOpts additional gdalwarp options, e.g. enabling output file
+#'   compression or multithreading#' @return data frame describing created tiles
 #' @import dplyr
 #' @export
 prepareTiles = function(input, targetDir, gridFile, tmpDir, method, skipExisting = TRUE, gdalOpts = '') {

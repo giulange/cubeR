@@ -2,21 +2,24 @@ Package: cubeR
 Type: Package
 Title: Automates data processing for the Landsupport project
 Description: Automates data processing for the Landsupport project.
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: c(
     person("Mateusz", "Zoltak",  email = "mateusz.zoltak@boku.ac.at", role = c("aut", "cre"))
   )
 License: MIT + file LICENSE
+Depends:
+    R (>= 3.5)
 Imports:
-    DBI,
-    doParallel,
-    dplyr,
-    mmand,
-    purrr,
-    raster,
-    sentinel2,
-    sf,
-    tidyr
+    DBI (>= 1.0),
+    doParallel (>= 1.0),
+    dplyr (>= 0.8),
+    mmand (>= 1.5),
+    purrr (>= 0.3),
+    raster (>= 2.9),
+    sentinel2 (>= 0.5.1),
+    sf (>= 0.7),
+    tidyr (>= 1.0),
+    foreach (>= 1.4.7)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1

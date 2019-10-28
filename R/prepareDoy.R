@@ -57,7 +57,7 @@ prepareDoy = function(input, targetDir, tmpDir, pythonDir, outBandPrefix, whichB
       ) %>%
       mutate(
         command = sprintf(
-          'python %s/which2doy.py --blockSize %d %s %s %s && mv %s %s',
+          'python3 %s/which2doy.py --blockSize %d %s %s %s && mv %s %s',
           pythonDir, blockSize, shQuote(.data$tmpFile), shQuote(.data$whichFile), .data$inputFiles, shQuote(.data$tmpFile), shQuote(.data$outFile)
         )
       )

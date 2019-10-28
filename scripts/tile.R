@@ -43,7 +43,7 @@ images = foreach(tls = assignToCores(images, nCores, chunksPerCore), .combine = 
   suppressMessages(mapTilesGrid(tls, gridFile, regionFile))
 }
 images = images %>%
-  tidyr::nest(tileFile, .key = tileFiles) %>%
+  tidyr::nest(tileFiles = tileFile) %>%
   ungroup()
 
 cat(paste('Creating', nrow(images), 'tiles', Sys.time(), '\n'))

@@ -49,7 +49,7 @@ prepareComposites = function(input, targetDir, tmpDir, pythonDir, skipExisting =
       ) %>%
       dplyr::mutate(
         command = sprintf(
-          'python %s/at-which.py --blockSize %d %s %s %s && mv %s %s',
+          'python3 %s/at-which.py --blockSize %d %s %s %s && mv %s %s',
           pythonDir, blockSize, shQuote(.data$tmpFile), shQuote(.data$whichFile), .data$inputFiles, shQuote(.data$tmpFile), shQuote(.data$outFile)
         )
       )

@@ -1,19 +1,5 @@
 # cubeR
 
-A package automating Landsupport data processing:
+A package automating Landsupport data processing.
 
-* S2 images download (from the s2.boku.eodc.eu) (`vignettes/dwnld.R`)
-* cloud mask generation (`vignettes/mask.R` / `prepareMasks()`)
-* NDVI computation (`vignettes/ndvi.R` / `prepareNdvi()`)
-* computing composites (`vignettes/which.R` & `vignettes/composite.R` / `prepareWhich()` & `prepareComposites()`)
-* reprojecting and retiling (`vignettes/tile.R` / `prepareTiles()`)
-
-## Installation
-
-Clone this repo.
-
-## Usage
-
-* Prepare you own config files based on `vignettes/configEodc.R`.
-* Use scripts from command line, e.g. `Rscript vignettes/tile.R myConfig.R zozlak myPswd myRegionOfInterest 2018-05-01 2018-05-31` 
-  or use package functions interactively - see `vignettes/scratchpad.R`.
+The documentation is provided in the wiki at https://github.com/IVFL-BOKU/landsupport/wiki.

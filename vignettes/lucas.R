@@ -19,18 +19,18 @@ dd = d %>%
   dplyr::group_by(tile) %>%
   tidyr::nest()
 dd %>%
-  do({
+  dplyr::group_by(tile) %>%
+  dplyr::do({
     extracted = .data
     for (i in seq_along(rasters$band)) {
-      extracted = extracted %>%
-        dplyr::mutate(
-          tileFile = getTilePath(tilesDir, .data$tile, rasters$date[i], rasters$band[i])
-        ) %>%
-        dplyr::mutate(!! rasters$column[i] := purrr::map2(.data$data, .data$tileFile, function(d, f){extractPixelValues(d$px, d$py, f)})) %>%
-        dplyr::select(-.data$tileFile)
+      tileFile = getTilePath(tilesDir, .data$tile, rasters$date[i], rasters$band[i])
+      if (file.exists(tileFile)) {
+        extracted[, rasters$column[i]] = extractPixelValues(.data$data$px, .data$data$py, tileFile)
+      } else {
+        warning(paste(tileFile, 'does not exist'))
+      }
     }
     save(extracted, file = paste0(saveDir, '/', extracted$tile, '.RData'))
-    gc();gc();gc();gc();
     data.frame(x = 1L)
   })
 dd = dd %>%
