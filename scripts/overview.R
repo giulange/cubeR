@@ -34,7 +34,7 @@ for (i in names(overviewPeriodBands)) {
 }
 periodsBands = suppressMessages(
   tibble(period = names(overviewPeriodBands), band = overviewPeriodBands) %>%
-    unnest() %>%
+    unnest(band) %>%
     inner_join(dates) %>%
     mutate(period = sub('^[0-9]+(-[0-9]+)?(-[0-9]+)?', '', from))
 )

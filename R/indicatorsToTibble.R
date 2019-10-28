@@ -32,7 +32,7 @@ indicatorsToTibble = function(ind) {
         return(res)
       })
     ) %>%
-    tidyr::unnest() %>%
+    tidyr::unnest(.data$i) %>%
     dplyr::rename(
       band = .data$bands,
       outBand = .data$bandName

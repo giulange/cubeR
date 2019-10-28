@@ -70,7 +70,7 @@ prepareIndicators = function(input, targetDir, tmpDir, indicators, skipExisting 
       )
     tmpFiles = processed %>%
       dplyr::select(.data$data) %>%
-      tidyr::unnest() %>%
+      tidyr::unnest(.data$data) %>%
       dplyr::filter(.data$command != '') %>%
       dplyr::select(.data$tileFile) %>%
       unlist() %>%
