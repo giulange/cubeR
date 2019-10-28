@@ -33,7 +33,7 @@ mapTilesGrid = function(input, gridFile, regionFile = NULL) {
       tile = purrr::map(.data$geom, function(x){grid$TILE[sf::st_intersects(grid, x, sparse = FALSE)]})
     ) %>%
     dplyr::select(-.data$geom) %>%
-    tidyr::unnest() %>%
+    tidyr::unnest(.data$tile) %>%
     dplyr::inner_join(gridBbox)
   return(result)
 }
