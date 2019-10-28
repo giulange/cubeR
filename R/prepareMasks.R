@@ -27,10 +27,12 @@
 #' @param bufferedValues a set of values in th2 S2's SCL file processed in the
 #'   buffering step (see the description)
 #' @param skipExisting should already existing tiles be skipped?
+#' @param gdalOutputOpts additional options passed to gdal commands, e.g. "-co something"
+#' @param gdalCache gdal cache size (crucial for memory usage)
 #' @return data frame describing created masks
 #' @import dplyr
 #' @export
-prepareMasks = function(input, targetDir, tmpDir, bandName, minArea, bufferSize, invalidValues, bufferedValues, skipExisting = TRUE) {
+prepareMasks = function(input, targetDir, tmpDir, bandName, minArea, bufferSize, invalidValues, bufferedValues, skipExisting = TRUE, gdalOutputOpts = '', gdalCache = 4096) {
   # integer arithmetic is much faster
   minArea = as.integer(minArea)
   bufferSize = as.integer(bufferSize)
@@ -82,7 +84,10 @@ prepareMasks = function(input, targetDir, tmpDir, bandName, minArea, bufferSize,
           tmpFileIn = paste0(tmpDir, '/', .data$date, '_CLOUDS_', .data$tile, '.tif')
           raster::writeRaster(tmp, tmpFileIn, overwrite = TRUE, datatype = 'INT1U', NAflag = 255L)
           tmpFileOut = paste0(tmpDir, '/', .data$date, '_BUFFERED_', .data$tile, '.tif')
-          command = sprintf('gdal_proximity.py -q %s %s -ot Byte -maxdist 10 -distunits PIXEL -fixed-buf-val 1 -values 1 -nodata 2', shQuote(tmpFileIn), shQuote(tmpFileOut))
+          command = sprintf(
+            'GDAL_CACHEMAX=%d gdal_proximity.py -q %s %s -ot Byte -maxdist 10 -distunits PIXEL -fixed-buf-val 1 -values 1 -nodata 2 %s', 
+            as.integer(gdalCache), shQuote(tmpFileIn), shQuote(tmpFileOut), gdalOutputOpts
+          )
           unlink(tmpFileOut)
           system(command, ignore.stdout = TRUE)
           buffered = raster::getValues(raster::raster(tmpFileOut))
@@ -99,8 +104,8 @@ prepareMasks = function(input, targetDir, tmpDir, bandName, minArea, bufferSize,
         tmpFile2 = paste0(tmpDir, '/mask_', basename(tmpFile))
         createDirs(.data$tileFile)
         command = sprintf(
-          'gdalwarp -q -overwrite -tr 10 10 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512" -r near %s %s && mv %s %s',
-          shQuote(tmpFile), shQuote(tmpFile2), shQuote(tmpFile2), shQuote(.data$tileFile)
+          'GDAL_CACHEMAX=%d gdalwarp -q -overwrite -tr 10 10 %s -r near %s %s && mv %s %s',
+          as.integer(gdalCache), gdalOutputOpts, shQuote(tmpFile), shQuote(tmpFile2), shQuote(tmpFile2), shQuote(.data$tileFile)
         )
         system(command, ignore.stdout = TRUE)
         unlink(tmpFile)

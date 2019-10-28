@@ -25,6 +25,8 @@ maskParam = list(
   list(bandName = 'CLOUDMASK2', minArea = 0L, bufferSize = 0L, invalidValues = c(0L:3L, 7L:11L), bufferedValues = integer())
 )
 maskSkipExisting = TRUE
+maskGdalOpts = '-co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
+maskGdalCache = 2048
 
 indicatorIndicators = list(
   list(bandName = 'NDVI2',  resolution = 10, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B08', 'B' = 'B04'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)')
@@ -51,7 +53,7 @@ tilePeriodBands = list(
 )
 tileResamplingMethod = 'near'
 tileGdalOpts = '--config GDAL_CACHEMAX 4096 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
-tileSkipExisting = TRUE
+tileSkipExisting = FALSE
 
 renameBands = data.frame(
   band =   c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'TCI', 'LAI', 'FAPAR', 'FCOVER', 'SCL', 'CLOUDMASK2', 'B02',  'B03',  'B04',  'B05',  'B06',  'B07',  'B08',  'B8A',  'B11',  'B12',  'TCI2', 'LAI2', 'FAPAR2', 'FCOVER2'),

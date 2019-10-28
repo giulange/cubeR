@@ -29,7 +29,7 @@ masks = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bi
     tmp = tls %>% select(date, tile) %>% distinct()
     cat(i$bandName, ' ', paste(tmp$date, tmp$tile, collapse = ', '), ' (', nrow(tls), ')\n', sep = '')
 
-    masksTmp[[length(masksTmp) + 1]] = suppressMessages(prepareMasks(tls, rawDir, tmpDir, i$bandName, i$minArea, i$bufferSize, i$invalidValues, i$bufferedValues, maskSkipExisting))
+    masksTmp[[length(masksTmp) + 1]] = suppressMessages(prepareMasks(tls, rawDir, tmpDir, i$bandName, i$minArea, i$bufferSize, i$invalidValues, i$bufferedValues, maskSkipExisting, maskGdalOpts, maskGdalCache))
   }
   bind_rows(masksTmp)
 }
