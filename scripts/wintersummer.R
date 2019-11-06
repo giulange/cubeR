@@ -8,7 +8,6 @@ cat(paste0(c('Running wintersummer.R', args, as.character(Sys.time()), '\n'), co
 source(args[1])
 
 devtools::load_all(cubeRpath, quiet = TRUE)
-library(sentinel2, quietly = TRUE)
 library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 library(tidyr, quietly = TRUE)
 library(doParallel, quietly = TRUE)
@@ -45,7 +44,11 @@ for (i in seq_along(wintersummerClimateFiles)) {
     mutate(!!tmp := getTilePath(rawDir, tile, '1900-01-01', names(wintersummerClimateFiles)[i]))
 }
 checkTilesExist(tiles %>% tidyr::gather(key = 'type', value = 'tileFile', -.data$period, -.data$tile))
-results = prepareWinterSummerThresholds(tiles, periodsDir, tmpDir, thresholdBand, wintersummerSkipExisting)
+cat(paste('Creating', nrow(tiles), 'thresholds', Sys.time(), '\n'))
+results = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
+  cat(paste(tls$period, tls$tile, collapse = ', '))
+  suppressMessages(prepareWinterSummerThresholds(tls, periodsDir, tmpDir, thresholdBand, wintersummerSkipExisting))
+}
 logProcessingResults(results, t1)
 t2 = Sys.time()
 
@@ -60,5 +63,9 @@ tiles = images %>%
     doyFile = getTilePath(periodsDir, tile, period, wintersummerDoyBand)
   )
 checkTilesExist(tiles %>% tidyr::gather(key = 'type', value = 'tileFile', -.data$period, -.data$tile))
-results = prepareWinterSummer(tiles, periodsDir, tmpDir, wintersummerModelName, wintersummerSkipExisting)
+cat(paste('Creating', nrow(tiles), 'classifications', Sys.time(), '\n'))
+results = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
+  cat(paste(tls$period, tls$tile, collapse = ', '))
+  suppressMessages(prepareWinterSummer(tls, periodsDir, tmpDir, wintersummerModelName, wintersummerSkipExisting))
+}
 logProcessingResults(results, t2)
