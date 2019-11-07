@@ -19,11 +19,11 @@ images = getCache(args['region'], args['from'], args['to'], args['cfgFile'])
 
 # model
 regionFile = getCachePath(cacheTmpl, args['region'], args['from'], args['to'], cloudCov, bands, 'geojson')
-results = prepareWinterSummerModel(
+results = suppressMessages(prepareWinterSummerModel(
   images, periodsDir, tilesDir, modelsDir, tmpDir, gridFile, regionFile, lcFile, wintersummerClimateFiles,
   wintersummerDoyBand, wintersummerNdviMaxBand, wintersummerModelName, wintersummerNdviMin,
   wintersummerResamplingMethod, wintersummerSkipExisting, wintersummerGdalOpts
-)
+))
 logProcessingResults(results %>% rename(tileFile = coefFile), t0)
 t1 = Sys.time()
 
