@@ -20,7 +20,7 @@ images = getCache(args['region'], args['from'], args['to'], args['cfgFile'])
 # model
 regionFile = getCachePath(cacheTmpl, args['region'], args['from'], args['to'], cloudCov, bands, 'geojson')
 results = prepareWinterSummerModel(
-  images, periodsDir, modelsDir, tmpDir, regionFile, lcFile, wintersummerClimateFiles,
+  images, periodsDir, tilesDir, modelsDir, tmpDir, gridFile, regionFile, lcFile, wintersummerClimateFiles,
   wintersummerDoyBand, wintersummerNdviMaxBand, wintersummerModelName, wintersummerNdviMin,
   wintersummerResamplingMethod, wintersummerSkipExisting, wintersummerGdalOpts
 )

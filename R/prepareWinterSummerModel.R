@@ -1,10 +1,11 @@
 #' Computes the winter/summer crops classification model
 #' @param tilesRaw images data frame with images list obtained form
 #'   \code{\link{getImages}}
-#' @param inputDir directory containing rasters with the \code{doyBand} and
-#'   \code{ndviMaxBand} rasters
+#' @param periodsDir directory containing periods-level rasters
+#' @param tilesDir directory containing tiles-level rasters
 #' @param targetDir directory storing computed model results
 #' @param tmpDir directory for temporary files
+#' @param gridFile path to the file storing target grid
 #' @param regionFile path to the file storing geometry of region of interest
 #'   (lcFile and climateFiles are cut to this extent to minimize the amount of
 #'   processing)
@@ -27,7 +28,7 @@
 #' @import dplyr
 #' @import foreach
 #' @export
-prepareWinterSummerModel = function(tilesRaw, inputDir, targetDir, tmpDir, regionFile, lcFile, climateFiles, doyBand, ndviMaxBand, modelName, ndviMin, method, skipExisting = TRUE, gdalOpts = '') {
+prepareWinterSummerModel = function(tilesRaw, periodsDir, tilesDir, targetDir, tmpDir, gridFile, regionFile, lcFile, climateFiles, doyBand, ndviMaxBand, modelName, ndviMin, method, skipExisting = TRUE, gdalOpts = '') {
   # extent
   tmpFile = raster::raster(climateFiles[1])
   res = paste(raster::res(tmpFile), collapse = ' ')
@@ -69,12 +70,12 @@ prepareWinterSummerModel = function(tilesRaw, inputDir, targetDir, tmpDir, regio
 
   # doyMaxNdvi & ndviMax
   tiles = tilesRaw %>%
-    imagesToTiles(inputDir, c(doyBand, ndviMaxBand)) %>%
-    mapTilesPeriods('1 year') %>%
+    imagesToPeriods('1 year', periodsDir, c(doyBand, ndviMaxBand)) %>%
+    mapTilesGrid(gridFile, regionFile) %>%
     dplyr::select(.data$period, .data$band, .data$tile) %>%
     dplyr::distinct() %>%
     dplyr::mutate(
-      tileFile = getTilePath(inputDir, .data$tile, .data$period, .data$band),
+      tileFile = getTilePath(tilesDir, .data$tile, .data$period, .data$band),
       outFile = getTilePath(targetDir, modelName, .data$period, .data$band)
     ) %>%
     dplyr::group_by(.data$band, .data$period, .data$outFile) %>%
