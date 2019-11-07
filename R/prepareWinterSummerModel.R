@@ -149,3 +149,4 @@ prepareWinterSummerModel = function(tilesRaw, inputDir, targetDir, tmpDir, regio
  }
   return(results)
 }
+
