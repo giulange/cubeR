@@ -2,6 +2,8 @@
 cubeRpath = '/eodc/private/boku/software/cubeR'
 # file containing the grid (every feture must provide the TILE property)
 gridFile = '/eodc/private/boku/ACube2/shapes/Grid_LAEA5210_100K_polygons.shp'
+# file with the Corine Land Cover map
+lcFile = '/eodc/private/boku/ACube2/auxiliary/CLC_2018/CLC2018_CLC2018_V2018_20.tif'
 # directory for storing temporary files
 tmpDir = '/eodc/private/boku/ACube2/tmp'
 # directory storing rasters before retiling
@@ -12,6 +14,8 @@ periodsDir = '/eodc/private/boku/ACube2/periods'
 tilesDir = '/eodc/private/boku/ACube2/tiles'
 # directory storing overviews
 overviewsDir = '/eodc/private/boku/ACube2/overviews'
+# directory storing models data
+modelsDir = '/eodc/private/boku/ACube2/models'
 # raw images cache file path template (see `?getCachePath`)
 cacheTmpl = '/eodc/private/boku/ACube2/cache/{region}_{dateFrom}_{dateTo}_{cloudCovMax}_{bands}'
 
@@ -20,7 +24,7 @@ bands = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 
 # maximal accepted granules' cloud coverage
 cloudCov = 0.4
 # number of workers (cores)
-nCores = 14
+nCores = 8
 # each worker (core) is assigned chunksPerCore data chunks (generally you shouldn't need to tune this property)
 chunksPerCore = 10
 
@@ -28,7 +32,7 @@ chunksPerCore = 10
 # (two latter ones work only on machines with a direct access to the BOKU's EODC storage)
 dwnldMethod = 'symlink'
 # maximum accepted local files to be deleted during the download (to avoid hitting own foot)
-dwnldMaxRemovals = 250
+dwnldMaxRemovals = 1000
 # s2.boku.eodc.eu database connection paramerters required for the "symlink" download method
 dwnldDbParam = list(host = '10.250.16.131', port = 5432, user = 'eodc', dbname = 'bokudata')
 ## parameters required for the "download" download method
@@ -41,7 +45,7 @@ dwnldTries = 2
 
 # description of cloud masks - parameters passed to prepareMasks() - see `?prepareMasks` (remember minArea and bufferSize unit is a 20m pixel)
 maskParam = list(
-  list(bandName = 'CLOUDMASK1', minArea = 9L, bufferSize = 5L, invalidValues = c(0L:3L, 7L:11L), bufferedValues = c(3L, 8L:10L)),
+#  list(bandName = 'CLOUDMASK1', minArea = 9L, bufferSize = 5L, invalidValues = c(0L:3L, 7L:11L), bufferedValues = c(3L, 8L:10L)),
   list(bandName = 'CLOUDMASK2', minArea = 0L, bufferSize = 0L, invalidValues = c(0L:3L, 7L:11L), bufferedValues = integer())
 )
 # should already existing masks be skipped (TRUE) or reprocessed anyway (FALSE)
@@ -49,17 +53,18 @@ maskSkipExisting = TRUE
 # gdal creation options used for masks
 maskGdalOpts = '-co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
 # gdal cache size used for mask creation
-maskGdalCache = 2048
+maskGdalCache = 1024
 
 # indicators definitions
 indicatorIndicators = list(
 #  list(bandName = 'NDVI1',  resolution = 10, mask = 'CLOUDMASK1', factor = 10000, bands = c('A' = 'B04', 'B' = 'B08'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
-  list(bandName = 'NDVI2',  resolution = 10, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B04', 'B' = 'B08'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)')
-#  list(bandName = 'NDTI2',  resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B11', 'B' = 'B12'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
-#  list(bandName = 'MNDWI2', resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B03', 'B' = 'B11'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
-#  list(bandName = 'NDBI2',  resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B11', 'B' = 'B8A'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
-#  list(bandName = 'BSI2',   resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B12', 'B' = 'B04', 'C' = 'B8A', 'D' = 'B02'), equation = '((A.astype(float) + B) - (C + D) ) / (0.0000001 + A + B + C + D)'),
-#  list(bandName = 'BLFEI2', resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B03', 'B' = 'B04', 'C' = 'B12', 'D' = 'B11'), equation = '((A.astype(float) + B + C) / 3 - D) / (0.0000001 + (A + B + C) / 3 + D)')
+  list(bandName = 'NDVI2',  resolution = 10, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B04', 'B' = 'B08'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
+  list(bandName = 'NDVI20',  resolution = 10, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B04', 'B' = 'B08'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
+  list(bandName = 'NDTI2',  resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B11', 'B' = 'B12'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
+  list(bandName = 'MNDWI2', resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B03', 'B' = 'B11'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
+  list(bandName = 'NDBI2',  resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B11', 'B' = 'B8A'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)'),
+  list(bandName = 'BSI2',   resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B12', 'B' = 'B04', 'C' = 'B8A', 'D' = 'B02'), equation = '((A.astype(float) + B) - (C + D) ) / (0.0000001 + A + B + C + D)'),
+  list(bandName = 'BLFEI2', resolution = 20, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B03', 'B' = 'B04', 'C' = 'B12', 'D' = 'B11'), equation = '((A.astype(float) + B + C) / 3 - D) / (0.0000001 + (A + B + C) / 3 + D)')
 )
 # should already existing indicator images be skipped (TRUE) or reprocessed anyway (FALSE)
 indicatorSkipExisting = TRUE
@@ -73,22 +78,21 @@ whichDoyPrefix = 'DOYMAX'
 # processing block size (affects memory usage)
 whichBlockSize = 1024
 # should already existing "which" images be skipped (TRUE) or reprocessed anyway (FALSE)
-whichSkipExisting = TRUE
+whichSkipExisting = FALSE
 
 # band names of bands for which composites should be computed
 compositeBands = list(
-  band      = c('NDVI2',     'LAI',       'TCI',       'B02',       'B03',      'B04',       'B05',       'B06',       'B07',       'B08',       'B8A',       'B11',       'B12',       'FAPAR',     'FCOVER'),
-  whichBand = c('NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2','NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2'),
-  outBand   = c('NDVI2',     'LAI2',      'TCI2',      'B02',       'B03',      'B04',       'B05',       'B06',       'B07',       'B08',       'B8A',       'B11',       'B12',       'FAPAR2',    'FCOVER2')
+  band      = c('NDVI2',     'LAI',       'TCI',       'B02',       'B03',       'B04',       'B05',        'B06',        'B07',        'B08',       'B8A',        'B11',        'B12',        'FAPAR',     'FCOVER'),
+  whichBand = c('NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI20', 'NMAXNDVI20', 'NMAXNDVI20', 'NMAXNDVI2', 'NMAXNDVI20', 'NMAXNDVI20', 'NMAXNDVI20', 'NMAXNDVI2', 'NMAXNDVI2'),
+  outBand   = c('NDVI2',     'LAI2',      'TCI2',      'B02',       'B03',       'B04',       'B05',        'B06',        'B07',        'B08',       'B8A',        'B11',        'B12',        'FAPAR2',    'FCOVER2')
 )
 # processing block size (affects memory usage)
-compositeBlockSize = 2048
+compositeBlockSize = 1024
 # should already existing composite images be skipped (TRUE) or reprocessed anyway (FALSE)
-compositeSkipExisting = TRUE
+compositeSkipExisting = FALSE
 
 # bands to be aggregated into quantiles
-#aggregateBands = c('NDVI2', 'NDTI2', 'MNDWI2', 'NDBI2', 'BSI2', 'BLFEI2')
-aggregateBands = c('NDVI2')
+aggregateBands = c('NDVI2', 'NDTI2', 'MNDWI2', 'NDBI2', 'BSI2', 'BLFEI2')
 # processing block size (affects memory usage)
 aggregateBlockSize = 512
 # quantiles to be computed
@@ -100,29 +104,62 @@ aggregateCountsBand = 'NDVI2'
 # counts output band name
 aggregateCountsOutBand = 'N2'
 # should already computed quantile images be skipped (TRUE) or reprocessed anyway (FALSE)
-aggregateSkipExisting = TRUE
+aggregateSkipExisting = FALSE
+
+wintersummerModelName = 'WS'
+wintersummerClimateFiles = c(
+  temp = '/eodc/private/boku/ACube2/auxiliary/wc2.0/eu_wc2.0_bio_30s_01.tif',
+  rain = '/eodc/private/boku/ACube2/auxiliary/wc2.0/eu_wc2.0_bio_30s_12.tif'
+)
+wintersummerDoyBand = 'DOYMAXNDVI2'
+wintersummerNdviMaxBand = 'NDVI2q98'
+wintersummerLcBand = 'LC'
+wintersummerResamplingMethod = 'med'
+wintersummerNdviMin = 2000
+wintersummerGdalOpts = '--config GDAL_CACHEMAX 1024 -wm 1024 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
+wintersummerSkipExisting = TRUE
 
 tileRawBands = character()
 tilePeriodBands = list(
-#  '1 month' = c('LAI1', 'NDVI1', 'TCI1', 'LAI2', 'NDVI2', 'TCI2'),
-  '1 month' = c('NDVI2', 'LAI2', 'TCI2', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'FAPAR2', 'FCOVER2')
-#  '1 year' = c(
-#    'DOYMAXNDVI2', 'NMAXNDVI2', 'DOYMAXNDVI1', 'NMAXNDVI1'
+#  '1 month' = c('NDVI2', 'LAI2', 'TCI2', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'FAPAR2', 'FCOVER2'),
+  '1 year' = c(
+#    'DOYMAXNDVI2', 'NMAXNDVI2',
 #    'N2',
 #    'NDVI2q05',  'NDVI2q50',  'NDVI2q98',
 #    'NDTI2q05',  'NDTI2q50',  'NDTI2q95', 
 #    'MNDWI2q05', 'MNDWI2q50', 'MNDWI2q95', 
 #    'NDBI2q05',  'NDBI2q50',  'NDBI2q95', 
 #    'BSI2q05',   'BSI2q50',   'BSI2q95', 
-#    'BLFEI2q05', 'BLFEI2q50', 'BLFEI2q95'
-#  )
+#    'BLFEI2q05', 'BLFEI2q50', 'BLFEI2q95',
+    'WS'
+  )
 )
 # should already existing tiles be skipped (TRUE) or reprocessed anyway (FALSE)
-tileSkipExisting = TRUE
+tileSkipExisting = FALSE
 # reprojection resampling algorithm - see `man gdalwap``
 tileResamplingMethod = 'near'
 # additional gdalwarp parameters used while reprojection & retiling - see `man gdalwap`
-tileGdalOpts = '--config GDAL_CACHEMAX 4096 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
+tileGdalOpts = '--config GDAL_CACHEMAX 1024 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
+
+# list of indicator band names used in the urban classification
+urbanIndicators = c(
+  'BLFEI2q05', 'BLFEI2q50', 'BLFEI2q95',
+  'NDVI2q05' , 'NDVI2q50' , 'NDVI2q98' ,
+  'MNDWI2q05', 'MNDWI2q50', 'MNDWI2q95',
+  'NDTI2q05' , 'NDTI2q50' , 'NDTI2q95' ,
+  'NDBI2q05' , 'NDBI2q50' , 'NDBI2q95' ,
+  'BSI2q05'  , 'BSI2q50'  , 'BSI2q95'
+)
+# directory with model files
+urbanModelsDir = '/eodc/private/boku/ACube2_myscripts/RF/'
+# urban classification output band name
+urbanBand = 'RFClassProb'
+# urban classification processing block size
+urbanBlockSize = 2048
+# additional gdalwarp parameters used while reprojection & retiling - see `man gdalwap`
+urbanGdalOpts = '--config GDAL_CACHEMAX 1024 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
+# should already existing output files be skipped (TRUE) or reprocessed anyway (FALSE)
+urbanSkipExisting = TRUE
 
 # tiles to be merged into overviews
 overviewPeriodBands = list(
@@ -131,7 +168,7 @@ overviewPeriodBands = list(
 )
 overviewResolution = 100
 overviewResamplingMethod = 'bilinear'
-overviewGdalOpts = '--config GDAL_CACHEMAX 4096 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
+overviewGdalOpts = '--config GDAL_CACHEMAX 1024 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
 overviewNCores = 16
 overviewSkipExisting = TRUE
 

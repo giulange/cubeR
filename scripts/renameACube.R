@@ -49,7 +49,7 @@ tiles = tilesRaw %>%
 tileShapes = tiles %>%
   filter(period != dateMax) %>%
   group_by(utm) %>%
-  filter(band == 'LAI2') %>%
+  filter(band == first(band)) %>%
   filter(row_number() == 1) %>%
   mutate(
     tileFile = getTilePath(periodsDir, utm, period, band)
