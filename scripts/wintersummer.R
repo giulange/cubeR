@@ -15,29 +15,32 @@ library(doParallel, quietly = TRUE)
 registerDoParallel()
 options(cores = nCores)
 
-images = getCache(args['region'], args['from'], args['to'], args['cfgFile'])
+images = suppressMessages(getCache(args['region'], args['from'], args['to'], args['cfgFile']))
 
 # model
+cat(paste('Computing model', Sys.time(), '\n'))
 regionFile = getCachePath(cacheTmpl, args['region'], args['from'], args['to'], cloudCov, bands, 'geojson')
-results = prepareWinterSummerModel(
+results = suppressMessages(prepareWinterSummerModel(
   images, periodsDir, tilesDir, modelsDir, tmpDir, gridFile, regionFile, lcFile, wintersummerClimateFiles,
   wintersummerDoyBand, wintersummerNdviMaxBand, wintersummerModelName, wintersummerNdviMin,
   wintersummerResamplingMethod, wintersummerSkipExisting, wintersummerGdalOpts
-)
+))
 logProcessingResults(results %>% rename(tileFile = coefFile), t0)
 t1 = Sys.time()
 
 # threshold band
 thresholdBand = paste0(wintersummerModelName, 'TH')
-tiles = images %>%
-  imagesToTiles(periodsDir, thresholdBand) %>%
-  mapTilesPeriods('1 year') %>%
-  select(period, tile) %>%
-  distinct() %>%
-  mutate(
-    modelFile = getTilePath(modelsDir, wintersummerModelName, period, 'COEF', ext = 'csv'),
-    lcFile = getTilePath(rawDir, tile, '1900-01-01', wintersummerLcBand)
-  )
+tiles = suppressMessages(
+  images %>%
+    imagesToTiles(periodsDir, thresholdBand) %>%
+    mapTilesPeriods('1 year') %>%
+    select(period, tile) %>%
+    distinct() %>%
+    mutate(
+      modelFile = getTilePath(modelsDir, wintersummerModelName, period, 'COEF', ext = 'csv'),
+      lcFile = getTilePath(rawDir, tile, '1900-01-01', wintersummerLcBand)
+    )
+)
 for (i in seq_along(wintersummerClimateFiles)) {
   tmp = paste0(names(wintersummerClimateFiles)[i], 'File')
   tiles = tiles %>%
@@ -46,26 +49,29 @@ for (i in seq_along(wintersummerClimateFiles)) {
 checkTilesExist(tiles %>% tidyr::gather(key = 'type', value = 'tileFile', -.data$period, -.data$tile))
 cat(paste('Creating', nrow(tiles), 'thresholds', Sys.time(), '\n'))
 results = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
-  cat(paste(tls$period, tls$tile, collapse = ', '))
+  cat(paste(tls$period, tls$tile, collapse = ', '), '\n')
   suppressMessages(prepareWinterSummerThresholds(tls, periodsDir, tmpDir, thresholdBand, wintersummerSkipExisting))
 }
 logProcessingResults(results, t1)
 t2 = Sys.time()
 
 # winter/summer band
-tiles = images %>%
-  imagesToTiles(periodsDir, thresholdBand) %>%
-  mapTilesPeriods('1 year') %>%
-  select(period, tile) %>%
-  distinct() %>%
-  mutate(
-    thresholdFile = getTilePath(periodsDir, tile, period, thresholdBand),
-    doyFile = getTilePath(periodsDir, tile, period, wintersummerDoyBand)
-  )
+tiles = suppressMessages(
+  images %>%
+    imagesToTiles(periodsDir, thresholdBand) %>%
+    mapTilesPeriods('1 year') %>%
+    select(period, tile) %>%
+    distinct() %>%
+    mutate(
+      thresholdFile = getTilePath(periodsDir, tile, period, thresholdBand),
+      doyFile = getTilePath(periodsDir, tile, period, wintersummerDoyBand)
+    )
+)
 checkTilesExist(tiles %>% tidyr::gather(key = 'type', value = 'tileFile', -.data$period, -.data$tile))
 cat(paste('Creating', nrow(tiles), 'classifications', Sys.time(), '\n'))
 results = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
-  cat(paste(tls$period, tls$tile, collapse = ', '))
+  cat(paste(tls$period, tls$tile, collapse = ', '), '\n')
   suppressMessages(prepareWinterSummer(tls, periodsDir, tmpDir, wintersummerModelName, wintersummerSkipExisting))
 }
 logProcessingResults(results, t2)
+

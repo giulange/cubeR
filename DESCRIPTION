@@ -19,8 +19,7 @@ Imports:
     sentinel2 (>= 0.5.1),
     sf (>= 0.7),
     tidyr (>= 1.0),
-    foreach (>= 1.4.7),
-    randomForest (>= 4.6)
+    foreach (>= 1.4.7)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1

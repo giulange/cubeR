@@ -49,12 +49,14 @@ prepareWinterSummerModel = function(tilesRaw, periodsDir, tilesDir, targetDir, t
   climateFilesOut = getTilePath(targetDir, modelName, '', names(climateFiles))
   createDirs(climateFilesOut)
   for (i in seq_along(climateFilesIn)) {
-    outFile = climateFilesOut[i]
-    tmpFile = paste0(tmpDir, '/', basename(outFile))
-    toRemove = c(toRemove, tmpFile)
-    command = sprintf('gdalwarp %s -q -overwrite -te %s -tr %s -r bilinear %s %s && mv %s %s', gdalOpts, extent, res, shQuote(climateFilesIn[i]), shQuote(tmpFile), shQuote(tmpFile), shQuote(outFile))
-    commands = c(commands, command)
-    unlink(outFile)
+    if (!skipExisting | !file.exists(climateFilesOut[i])) {
+      outFile = climateFilesOut[i]
+      tmpFile = paste0(tmpDir, '/', basename(outFile))
+      toRemove = c(toRemove, tmpFile)
+      command = sprintf('gdalwarp %s -q -overwrite -te %s -tr %s -r bilinear %s %s && mv %s %s', gdalOpts, extent, res, shQuote(climateFilesIn[i]), shQuote(tmpFile), shQuote(tmpFile), shQuote(outFile))
+      commands = c(commands, command)
+      unlink(outFile)
+    }
   }
 
   # LC
@@ -104,50 +106,59 @@ prepareWinterSummerModel = function(tilesRaw, periodsDir, tilesDir, targetDir, t
   unlink(toRemove)
 
   # model
-  lcv   = raster::getValues(raster::raster(lcFileOut))
-  mask = !is.na(lcv) & lcv >= 200 & lcv < 300
-  climv = matrix(NA_integer_, nrow = length(lcv), ncol = length(climateFilesOut))
-  colnames(climv) = names(climateFiles)
-  for (i in seq_along(climateFilesOut)) {
-    climv[, i] = raster::getValues(raster::raster(climateFilesOut[i]))
-    mask = mask & !is.na(climv[, i])
-  }
   periods = tiles %>%
     dplyr::group_by(.data$period) %>%
     dplyr::select(.data$period, .data$band, .data$outFile) %>%
-    tidyr::spread('band', 'outFile')
-  results = foreach(period = split(periods, seq_along(periods$period)), .combine = bind_rows) %dopar% {
-    modelFile = getTilePath(targetDir, modelName, period$period, 'MODEL', ext = 'RData')
-    coefFile = getTilePath(targetDir, modelName, period$period, 'COEF', ext = 'csv')
-    result =     dplyr::tibble(
-      period = period$period,
-      coefFile = coefFile,
-      modelFile = modelFile,
-      processed = FALSE
+    tidyr::spread('band', 'outFile') %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(
+      modelFile = getTilePath(targetDir, modelName, .data$period, 'MODEL', ext = 'RData'),
+      coefFile = getTilePath(targetDir, modelName, .data$period, 'COEF', ext = 'csv')
+    ) %>%
+    dplyr::mutate(
+      processed = dplyr::if_else(file.exists(modelFile) & file.exists(coefFile) & skipExisting, FALSE, NA)
     )
-    if (!file.exists(modelFile) | !file.exists(coefFile) | skipExisting) {
-      unlink(c(modelFile, coefFile))
-
-      ndviv = raster::getValues(raster::raster(unlist(period[, ndviMaxBand])))
-      doyv  = raster::getValues(raster::raster(unlist(period[, doyBand])))
-      tileMask = mask & !is.na(doyv) & !is.na(ndviv) & ndviv >= ndviMin
-      data = dplyr::tibble(doy = doyv[tileMask]) %>%
-        dplyr::bind_cols(climv[tileMask, ] %>% as_tibble())
-      frml = paste0('doy ~ ', paste0(names(climateFiles), collapse = ' + '))
-      model = stats::lm(frml, data = data)
-
-      param = dplyr::tibble(
-        coef = tolower(gsub('[()]', '', names(stats::coef(model)))),
-        value = as.numeric(stats::coef(model))
-      )
-      utils::write.csv(param, coefFile, row.names = FALSE, na = '')
-
-      save(period, model, file = modelFile)
-
-      result$processed = TRUE
+  skipped = periods %>%
+    dplyr::filter(processed == FALSE) %>%
+    dplyr::select(.data$period, .data$modelFile, .data$coefFile, processed)
+  periods = periods %>%
+    dplyr::filter(is.na(processed))
+  if (nrow(periods) > 0) {
+    lcv   = raster::getValues(raster::raster(lcFileOut))
+    mask = !is.na(lcv) & lcv >= 200 & lcv < 300
+    climv = matrix(NA_integer_, nrow = length(lcv), ncol = length(climateFilesOut))
+    colnames(climv) = names(climateFiles)
+    for (i in seq_along(climateFilesOut)) {
+      climv[, i] = raster::getValues(raster::raster(climateFilesOut[i]))
+      mask = mask & !is.na(climv[, i])
     }
-    result
- }
-  return(results)
+    unlink(c(periods$modelFile, periods$coefFile))
+
+    results = foreach(period = split(periods, seq_along(periods$period)), .combine = bind_rows) %dopar% {
+      result = period %>%
+        dplyr::select(.data$period, .data$coefFile, .data$modelFile) %>%
+	dplyr::mutate(processed = TRUE)
+      try({
+        ndviv = raster::getValues(raster::raster(unlist(period[, ndviMaxBand])))
+        doyv  = raster::getValues(raster::raster(unlist(period[, doyBand])))
+        tileMask = mask & !is.na(doyv) & !is.na(ndviv) & ndviv >= ndviMin
+        data = dplyr::tibble(doy = doyv[tileMask]) %>%
+          dplyr::bind_cols(climv[tileMask, ] %>% as_tibble())
+        frml = paste0('doy ~ ', paste0(names(climateFiles), collapse = ' + '))
+        model = stats::lm(frml, data = data)
+
+        save(period, model, file = result$modelFile)
+        param = dplyr::tibble(
+          coef = tolower(gsub('[()]', '', names(stats::coef(model)))),
+          value = as.numeric(stats::coef(model))
+        )
+        utils::write.csv(param, result$coefFile, row.names = FALSE, na = '')
+      })
+      result
+    }
+  } else {
+    results = dplyr::tibble(period = character(), modelFile = character(), coefFile = character(), processed = logical())
+  }
+  return(bind_rows(skipped, results))
 }
 

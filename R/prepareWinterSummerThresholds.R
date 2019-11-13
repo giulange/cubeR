@@ -39,7 +39,7 @@ prepareWinterSummerThresholds = function(input, targetDir, tmpDir, thresholdBand
     coef = input %>%
       dplyr::group_by(.data$modelFile) %>%
       dplyr::do({
-        utils::read.csv(.data$modelFile, stringsAsFactors = FALSE) %>%
+        utils::read.csv(.data$modelFile[1], stringsAsFactors = FALSE) %>%
           tidyr::spread('coef', 'value')
       })
     input = input %>%
@@ -56,7 +56,7 @@ prepareWinterSummerThresholds = function(input, targetDir, tmpDir, thresholdBand
         inputs = paste0('-', inputLetters, ' ', shQuote(inputs), collapse = ' ')
 
         calcLetters = LETTERS[1 + 1:length(climateVars)]
-        calcValues = as.numeric(input[, climateVars])
+        calcValues = as.numeric(.data[, climateVars])
         calc = paste0('(A >= 200) * (A < 300) * (', .data$intercept, ' + ', paste0(calcLetters, ' * ', calcValues, collapse = ' + '), ')')
         command = sprintf(
           'gdal_calc.py --quiet --overwrite --NoDataValue 0 %s --calc %s --type=Int16 --outfile=%s --co="COMPRESS=DEFLATE" --co="TILED=YES" --co="BLOCKXSIZE=512" --co="BLOCKYSIZE=512" && mv %s %s',
