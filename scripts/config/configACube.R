@@ -7,10 +7,11 @@ tilesDir = '/eodc/private/boku/ACube2/tiles'
 overviewsDir = '/eodc/private/boku/ACube2/overviews'
 cacheTmpl = '/eodc/private/boku/ACube2/cache/{region}_{dateFrom}_{dateTo}_{cloudCovMax}_{bands}'
 acubeDir = '/eodc/private/boku/ACube'
+acubeLogsDir = '/eodc/private/boku/ACube_logs'
 
 bands = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'TCI', 'LAI', 'FAPAR', 'FCOVER', 'SCL')
 cloudCov = 0.5
-nCores = 8
+nCores = 32
 chunksPerCore = 10
 
 dwnldMethod = 'symlink'
@@ -38,7 +39,7 @@ whichBands = c('NDVI2', 'NDVI20')
 whichPrefix = 'NMAX'
 whichDoyPrefix = 'DOYMAX'
 whichBlockSize = 512
-whichSkipExisting = TRUE
+whichSkipExisting = FALSE
 
 compositeBands = list(
   band      = c('B02',       'B03',       'B04',       'B05',        'B06',        'B07',        'B08',       'B8A',        'B11',        'B12',        'TCI',       'LAI',       'FAPAR',     'FCOVER'),
@@ -46,7 +47,7 @@ compositeBands = list(
   outBand   = c('B02',       'B03',       'B04',       'B05',        'B06',        'B07',        'B08',       'B8A',        'B11',        'B12',        'TCI2',      'LAI2',      'FAPAR2',    'FCOVER2')
 )
 compositeBlockSize = 512
-compositeSkipExisting = TRUE
+compositeSkipExisting = FALSE
 
 tileRawBands = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'TCI', 'LAI', 'FAPAR', 'FCOVER', 'SCL', 'CLOUDMASK2')
 tilePeriodBands = list(
@@ -54,7 +55,7 @@ tilePeriodBands = list(
 )
 tileResamplingMethod = 'near'
 tileGdalOpts = '--config GDAL_CACHEMAX 1024 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
-tileSkipExisting = TRUE
+tileSkipExisting = FALSE
 
 renameBands = data.frame(
   band =   c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'TCI', 'LAI', 'FAPAR', 'FCOVER', 'SCL', 'CLOUDMASK2', 'B02',  'B03',  'B04',  'B05',  'B06',  'B07',  'B08',  'B8A',  'B11',  'B12',  'TCI2', 'LAI2', 'FAPAR2', 'FCOVER2'),

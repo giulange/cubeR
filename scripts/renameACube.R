@@ -119,10 +119,14 @@ tmp = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bind
 }
 
 # 4. Rename
-
 tiles = tiles %>%
   mutate(
     targetFile = sprintf('%s/%s/%s_SEN2COR_%s_%s------_%s_%s_EU010M_%sT1.tif', acubeDir, name, gsub(' ', '-', sprintf('%-10s', name)), ab, level, gsub('-', '', periodMin), gsub('-', '', periodMax), tile)
   )
 tmp = createDirs(tiles$targetFile)
 tmp = file.rename(tiles$tileFile, tiles$targetFile)
+logDir = paste0(acubeLogsDir, '/', format(Sys.time(), '%Y%m%d_%H%M%S'))
+dir.create(logDir)
+writeLines(tiles$targetFile, paste0(logDir, '/delete.txt'))
+writeLines(tiles$targetFile, paste0(logDir, '/insert.txt'))
+

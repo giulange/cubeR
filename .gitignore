@@ -7,3 +7,5 @@ vignettes/*RData
 /*RData
 /man
 /wiki
+/scripts/logs/
+missing.RData
