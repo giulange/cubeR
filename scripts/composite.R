@@ -28,7 +28,7 @@ tiles = suppressMessages(
     arrange(period, tile, band, date)
 )
 tmp = tibble(tileFile = c(tiles$tileFile, unique(tiles$whichFile)))
-checkTilesExist(tiles)
+checkTilesExist(tmp)
 
 cat(paste('Computing', n_groups(tiles), 'composites', Sys.time(), '\n'))
 options(cores = nCores)
