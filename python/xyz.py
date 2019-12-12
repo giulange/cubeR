@@ -7,6 +7,11 @@ import ogr
 import os
 import osr
 
+def step1(param):
+  XYZ.step1(**param)
+  
+def step2(param):
+  XYZ.step2(**param)
 
 class XYZ(object):
   spatRefs = {}
@@ -19,7 +24,7 @@ class XYZ(object):
   def __init__(self, rasterFile):
     self.rasterFile = rasterFile
 
-  def makeTiles(self, targetDir, resAlg='bilinear', maxZoom=None, minZoom = 0, formatOptions=[], verbose=1):
+  def makeTiles(self, targetDir, resAlg='bilinear', resAlg2='mean', maxZoom=None, minZoom = 0, formatOptions=[], verbose=1, parallel = 1):
     raster = gdal.Open(self.rasterFile)
     proj = raster.GetProjection()
     (x0, y0, x1, y1) = self.getBBox(raster)
@@ -30,35 +35,49 @@ class XYZ(object):
     (X1, Y1) = self.coord2xy(x1, y1, proj, z) # last tile
     res = self.z2res(z)
 
-    # most detailed tiles
-    for x in xrange(X0, X1 + 1):
-      if verbose >= 1:
-        print('Zoom level %d, x %d/%d, y %d, time %s' % (z, x - X0, X1 - X0, Y1 - Y0, str(datetime.datetime.now())))
-      for y in xrange(Y0, Y1 + 1):
-        (x0, y0) = self.xy2coord(x, y + 1, 3857, z)
-        (x1, y1) = self.xy2coord(x + 1, y, 3857, z)
-        dstFile = self.xyz2path(targetDir, z, x, y)
-        gdal.Warp(dstFile, self.rasterFile, resampleAlg=resAlg, outputBounds=(x0, y0, x1, y1), dstSRS='EPSG:3857', xRes=res, yRes=res, format='GTiff', creationOptions=formatOptions)
+    pool = multiprocessing.Pool(parallel)
 
+    # most detailed tiles
+    args = []
+    for x in range(X0, X1 + 1):
+      for y in range(Y0, Y1 + 1):
+          args.append({'x': int(x), 'y': int(y), 'z': z, 'X0': X0, 'X1': X1, 'Y0': Y0, 'Y1': Y1, 'targetDir': targetDir, 'rasterFile': self.rasterFile, 'resAlg': resAlg, 'res': res, 'formatOptions': formatOptions, 'verbose': verbose})
+    pool.map(step1, args, 1)
+  
     # building piramids
-    for zz in xrange(z - 1, minZoom - 1, -1):
+    for zz in range(z - 1, minZoom - 1, -1):
+      args = []
       (X0, Y0, X1, Y1) = (int(X0 / 2), int(Y0 / 2), int(X1 / 2), int(Y1 / 2))
-      for x in xrange(X0, X1 + 1):
-        if verbose >= 1:
-          print('Zoom level %d, x %d/%d, y %d, time %s' % (zz, x - X0, X1 - X0, Y1 - Y0, str(datetime.datetime.now())))
-        for y in xrange(Y0, Y1 + 1):
-          inputFiles = []
-          for xx in xrange(2):
-            for yy in xrange(2):
-              path = self.xyz2path(targetDir, zz + 1, 2 * x + xx, 2 * y + yy)
-              if os.path.isfile(path):
-                inputFiles.append(path)
-          if len(inputFiles) > 0:
-            (x0, y0) = self.xy2coord(x, y + 1, 3857, zz)
-            (x1, y1) = self.xy2coord(x + 1, y, 3857, zz)
-            res = 40075016.686 / 256.0 / (2 ** zz)
-            dstFile = self.xyz2path(targetDir, zz, x, y)
-            gdal.Warp(dstFile, inputFiles, resampleAlg=resAlg, outputBounds=(x0, y0, x1, y1), xRes=res, yRes=res, format='GTiff', creationOptions=formatOptions)
+      for x in range(X0, X1 + 1):
+        for y in range(Y0, Y1 + 1):
+          args.append({'x': int(x), 'y': int(y), 'z': int(zz), 'X0': X0, 'X1': X1, 'Y0': Y0, 'Y1': Y1, 'targetDir': targetDir, 'rasterFile': self.rasterFile, 'resAlg': resAlg, 'res': res, 'formatOptions': formatOptions, 'verbose': verbose})
+      pool.map(step2, args, 1)
+
+  @staticmethod
+  def step1(x, y, z, X0, X1, Y0, Y1, targetDir, rasterFile, resAlg, res, formatOptions, verbose):
+    if verbose >= 1:
+      print('Zoom level %d, x %d/%d, y %d/%d, time %s' % (z, x - X0, X1 - X0, y - Y0, Y1 - Y0, str(datetime.datetime.now())))
+    (x0, y0) = XYZ.xy2coord(x, y + 1, 3857, z)
+    (x1, y1) = XYZ.xy2coord(x + 1, y, 3857, z)
+    dstFile = XYZ.xyz2path(targetDir, z, x, y)
+    gdal.Warp(dstFile, rasterFile, resampleAlg=resAlg, outputBounds=(x0, y0, x1, y1), dstSRS='EPSG:3857', xRes=res, yRes=res, format='GTiff', creationOptions=formatOptions)
+
+  @staticmethod
+  def step2(x, y, z, X0, X1, Y0, Y1, targetDir, rasterFile, resAlg, res, formatOptions, verbose):
+    if verbose >= 1:
+      print('Zoom level %d, x %d/%d, y %d/%d, time %s' % (z, x - X0, X1 - X0, y - Y0, Y1 - Y0, str(datetime.datetime.now())))
+    inputFiles = []
+    for xx in xrange(2):
+      for yy in xrange(2):
+        path = XYZ.xyz2path(targetDir, z + 1, 2 * x + xx, 2 * y + yy)
+        if os.path.isfile(path):
+          inputFiles.append(path)
+    if len(inputFiles) > 0:
+      (x0, y0) = XYZ.xy2coord(x, y + 1, 3857, z)
+      (x1, y1) = XYZ.xy2coord(x + 1, y, 3857, z)
+      res = 40075016.686 / 256.0 / (2 ** z)
+      dstFile = XYZ.xyz2path(targetDir, z, x, y)
+      gdal.Warp(dstFile, inputFiles, resampleAlg=resAlg, outputBounds=(x0, y0, x1, y1), xRes=res, yRes=res, format='GTiff', creationOptions=formatOptions)
 
   """ Returns a properly orientated bounding box (x0, y0, x1, y1) in raster's projection
   where x0 < x1 and y0 > y1 (the XYZ tiles go from north to south!)
@@ -76,8 +95,11 @@ class XYZ(object):
     y = int(y)
     d = os.path.join(targetDir, str(z), '%d_%d' % (int(x / 100), int(y / 100)))
     path = os.path.join(d, '%d_%d_%d.tif' % (z, x, y))
-    if not os.path.isdir(d):
+    try:
       os.makedirs(d, 0o770)
+    except OSError as e:
+      if e.errno != 17:
+        raise e
     return path
 
   @staticmethod
@@ -142,6 +164,7 @@ parser.add_argument('--maxZoom', type=int, help='maximal zoom level (derived fro
 parser.add_argument('--verbose', action='store_true')
 parser.add_argument('--gdalCacheSize', type=int, default=1024)
 parser.add_argument('--formatOptions', nargs='*', default=['COMPRESS=DEFLATE', 'TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512'], help='output format options')
+parser.add_argument('--parallel', type=int, default=1)
 parser.add_argument('inputFile')
 parser.add_argument('outputDir')
 args = parser.parse_args()
@@ -150,5 +173,5 @@ if args.gdalCacheSize is not None:
     gdal.SetCacheMax(args.gdalCacheSize)
 
 xyz = XYZ(args.inputFile)
-xyz.makeTiles(args.outputDir, args.algorithm, args.maxZoom, args.minZoom, args.formatOptions, int(args.verbose))
+xyz.makeTiles(args.outputDir, args.algorithm, args.algorithm2, args.maxZoom, args.minZoom, args.formatOptions, int(args.verbose), args.parallel)
 
