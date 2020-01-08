@@ -48,7 +48,7 @@ maskSkipExisting = TRUE
 
 # indicators definitions
 indicatorIndicators = list(
-  list(bandName = 'NDVI2',  resolution = 10, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B04', 'B' = 'B08'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)')
+  list(bandName = 'NDVI2',  resolution = 10, mask = 'CLOUDMASK2', factor = 10000, bands = c('A' = 'B08', 'B' = 'B04'), equation = '(A.astype(float) - B) / (0.0000001 + A + B)')
 )
 # should already existing indicator images be skipped (TRUE) or reprocessed anyway (FALSE)
 indicatorSkipExisting = TRUE
