@@ -77,12 +77,3 @@ tileResamplingMethod = 'near'
 tileGdalOpts = '--config GDAL_CACHEMAX 4096 -wm 2048 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
 tileSkipExisting = FALSE
 
-overviewPeriodBands = list(
-  '1 month' = c('LAI1',    'LAI2', 'NDVI1', 'NDVI2', 'TCI1', 'TCI2'),
-  '1 year'  = c('NDVI2q05', 'NDVI2q50', 'NDVI2q95')
-)
-overviewNCores = 6
-overviewResolution = 100
-overviewResamplingMethod = 'bilinear'
-overviewGdalOpts = '--config GDAL_CACHEMAX 4096 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
-overviewSkipExisting = FALSE
