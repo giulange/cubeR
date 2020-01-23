@@ -35,7 +35,9 @@ indicatorIndicators = list(
 )
 indicatorSkipExisting = TRUE
 
-whichBands = c('NDVI2', 'NDVI20')
+whichBands = list(
+  '1 month' = c('NDVI2', 'NDVI20')
+)
 whichPrefix = 'NMAX'
 whichDoyPrefix = 'DOYMAX'
 whichBlockSize = 512

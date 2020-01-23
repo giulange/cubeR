@@ -36,7 +36,7 @@ prepareWinterSummer = function(input, targetDir, tmpDir, bandName, skipExisting 
       ) %>%
       dplyr::mutate(
         command = sprintf(
-          'gdal_calc.py --quiet --overwrite -A %s -B %s --calc "1 + (A <= B)" --type=Byte --outfile=%s --co="COMPRESS=DEFLATE" --co="TILED=YES" --co="BLOCKXSIZE=512" --co="BLOCKYSIZE=512" && mv %s %s',
+          'gdal_calc.py --quiet --overwrite -A %s -B %s --calc "1 + (A > B)" --type=Byte --outfile=%s --co="COMPRESS=DEFLATE" --co="TILED=YES" --co="BLOCKXSIZE=512" --co="BLOCKYSIZE=512" && mv %s %s',
           shQuote(.data$doyFile), shQuote(.data$thresholdFile), shQuote(.data$tmpFile), shQuote(.data$tmpFile), shQuote(.data$tileFile)
         )
       )

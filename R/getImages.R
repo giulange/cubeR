@@ -18,7 +18,9 @@ getImages = function(roiId, dateMin, dateMax, cloudCovMax, dir, bandsS2, ...) {
     dplyr::rename(dateFull = .data$date) %>%
     dplyr::mutate(date = substr(.data$dateFull, 1, 10)) %>%
     dplyr::group_by(.data$granuleId, .data$band) %>%
-    dplyr::filter(.data$band %in% bandsS2 & .data$resolution == min(.data$resolution)) %>%
+    dplyr::filter(.data$band %in% bandsS2 & .data$resolution == min(.data$resolution))
+  nGranules = dplyr::n_distinct(imgs$granuleId)
+  imgs = imgs %>%
     dplyr::group_by(.data$granuleId) %>%
     dplyr::filter(n() == length(bandsS2)) %>%
     dplyr::group_by(.data$date, .data$utm, .data$band) %>% # same S2 acquisition (date x utm) can be received by two ground stations resulting in two granules (sic!)
@@ -26,5 +28,9 @@ getImages = function(roiId, dateMin, dateMax, cloudCovMax, dir, bandsS2, ...) {
     dplyr::select(-.data$dateFull) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(file = getTilePath(dir, .data$utm, .data$date, .data$band))
+  ratio = dplyr::n_distinct(imgs$granuleId) / nGranules
+  if (ratio < 0.99) {
+    warning('original granules to valid granules ratio ', ratio)
+  }
   return(imgs)
 }

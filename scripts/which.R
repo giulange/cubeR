@@ -15,7 +15,7 @@ registerDoParallel()
 
 tiles = suppressMessages(
   getCache(args['region'], args['from'], args['to'], args['cfgFile']) %>%
-    imagesToTiles(rawDir, whichBands) %>%
+    imagesToTiles(rawDir, whichBands[[args['period']]]) %>%
     mapTilesPeriods(args['period'], args['from']) %>%
     group_by(period, tile, band) %>%
     arrange(period, tile, date, band)
