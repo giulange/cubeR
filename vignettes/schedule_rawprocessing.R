@@ -1,5 +1,6 @@
 library(sentinel2)
 library(dplyr)
+stop('przepisać na wyszukiwanie images i uwzględnić istnienie wszystkich wymaganych band-ów')
 
 date2months = function(x, k = 1) {
   return(as.integer(substr(x, 1, 4)) * 12 + floor(as.integer(substr(x, 6, 7)) / k) * k - 1)
@@ -12,16 +13,15 @@ S2_initialize_user('landsupport', 'CbYwN9cNvp')
 
 maxGranules = 1 # per orbit
 maxCc = 0.2
-monthMin = date2months('2019-07') #min(g$month)
-monthMax = date2months('2019-09') #max(g$month)
+monthMin = date2months('2019-01') #min(g$month)
+monthMax = date2months('2019-12') #max(g$month)
 
-gCube = as.tbl(S2_query_granule(regionId = '%_cube', dateMin = paste0(months2date(monthMin), '-01'), dateMax = paste0(months2date(monthMax), '-01'))) %>%
-  mutate(cube = TRUE) %>%
-  select(granuleId, cube)
-gAll = as.tbl(S2_query_granule(regionId = '%_cube', cloudCovMax = 100, dateMin = paste0(months2date(monthMin), '-01'), dateMax = paste0(months2date(monthMax), '-01')))
-g = gAll %>%
-  mutate(month = date2months(date)) %>%
-  left_join(gCube)
+g = as.tbl(S2_query_granule(regionId = '%_cube', cloudCovMax = 100, dateMin = paste0(months2date(monthMin), '-01'), dateMax = paste0(months2date(monthMax), '-01')))
+g = g %>%
+  mutate(
+    month = date2months(date),
+    cube = !is.na(url)
+  )
 save(g, file = 'all_granules.RData')
 
 months = tibble(month = seq(monthMin, monthMax)) %>%
@@ -34,11 +34,14 @@ months = tibble(month = seq(monthMin, monthMax)) %>%
   )
 # Here and now how many {month, utm tile, orbit} have data
 months %>%
+  group_by(month, utm, orbit) %>%
   summarize(passed = any(atmCorr > 0)) %>%
   group_by(passed) %>%
   summarize(n = n())
 # How many {month, utm tile, orbit} can pass the minProb using no more then maxGranules?
 months %>%
+  group_by(month, utm, orbit) %>%
+  arrange(month, utm, orbit, cloudCov) %>%
   summarize(passed = first(cloudCov) <= maxCc * 100) %>%
   group_by(passed) %>%
   summarize(n = n())
@@ -52,8 +55,8 @@ months %>%
 
 maxGranules = 1 # per orbit
 maxCc = 0.2
-monthMin = date2months('2019-07') #min(g$month)
-monthMax = date2months('2019-09') #max(g$month)
+monthMin = date2months('2019-01') #min(g$month)
+monthMax = date2months('2019-12') #max(g$month)
 
 months = tibble(month = seq(monthMin, monthMax)) %>%
   left_join(g) %>%
@@ -61,8 +64,13 @@ months = tibble(month = seq(monthMin, monthMax)) %>%
   arrange(month, utm, orbit, cloudCov) %>%
   mutate(n = row_number())
 toAdd = months %>%
-  filter(n <= maxGranules & cloudCov <= maxCc * 100 & is.na(cube) & atmCorr == 0) %>%
+  filter(n <= maxGranules & cloudCov <= maxCc * 100 & atmCorr == 0) %>%
   mutate(bought = FALSE)
+regions = S2_query_roi(regionId = 'granule_%') %>%
+  select(regionId) %>%
+  mutate(granuleId = as.integer(substring(regionId, 9)))
+toAdd = toAdd %>%
+  anti_join(regions)
 save(toAdd, file = '~/Pulpit/cube.RData')
 load('~/Pulpit/cube.RData')
 for (i in seq_along(toAdd$granuleId)) {
