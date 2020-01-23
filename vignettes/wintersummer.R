@@ -85,7 +85,7 @@ d %>%
   ggtitle('Winter/summer classification results for year 2018')
 
 d %>%
-  rename(ws = ws2) %>%
+  rename(ws = ws1) %>%
   group_by(k, doyg, ws) %>%
   summarize(n = n()) %>%
   group_by(k) %>%
@@ -133,3 +133,5 @@ refv = raster::getValues(raster::raster('~/roboty/BOKU/cube/data/shapes/wc2.0_2.
 tv = raster::getValues(raster::raster('~/roboty/BOKU/cube/data/shapes/wc2.0_2.5m_bio/wintersummer_NEAR_masked_100m.tif'))
 refmask = !is.na(refv) & refv == 3 # 3 - winter cereal
 100 * table(tv[refmask], useNA = 'always') / sum(refmask)
+
+# verification with Francesco's crop classification for Marchfeld yeld 73% accuracy
