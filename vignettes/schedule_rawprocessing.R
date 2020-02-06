@@ -11,10 +11,11 @@ months2date = function(x, k = 1, end = FALSE) {
 }
 
 bands = c('B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'SCL', 'LAI', 'TCI', 'FAPAR', 'FCOVER')
-roiEu = S2_query_roi(regionId = 'EU_cube')
 monthMin = date2months('2020-01')
 monthMax = date2months('2020-01')
 S2_initialize_user('landsupport', 'CbYwN9cNvp')
+roiEu = S2_query_roi(regionId = 'EU_cube')
+stopifnot(nrow(roiEu) == 1)
 
 i = list()
 for (month in monthMin:monthMax) {
