@@ -112,7 +112,7 @@ load('~/Pulpit/cube.RData')
 for (j in seq_along(toAdd$granuleId)) {
   if (!toAdd$bought[j]) {
     try({
-      S2_buy_granule(toAdd$granuleId[j], 'always')
+      S2_buy_granule(toAdd$granuleId[j], 'force')
       toAdd$bought[j] = TRUE
     })
   }

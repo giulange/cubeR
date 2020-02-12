@@ -6,7 +6,8 @@ devtools::load_all('../')
 #tilesDir = '~/Pulpit/shapes/'
 tilesDir = '/eodc/private/boku/ACube2/tiles'
 saveDir = '/eodc/private/boku/ACube2/tmp/extracted'
-pointsFile = '/eodc/private/boku/ACube2/auxiliary/LUCAS2018 - field_survey/EU_2018_190611_CPRNC_G_3035_LAEAgridID_QB_NDVI_IMP2015_CLC2018_dec.shp'
+pointsFile = '/eodc/private/boku/ACube2/auxiliary/LUCAS2018 - field_survey/EU_2018_190611.csv'
+urbanPointsFile = '/eodc/private/boku/ACube2/auxiliary/LUCAS2018 - field_survey/urban_points_sample.shp'
 nCores = 32
 chunksPerCore = 10
 
@@ -27,9 +28,9 @@ rasters = tibble(
 registerDoParallel()
 options(cores = nCores)
 
-d = sf::read_sf(pointsFile)
+d = readr::read_csv(pointsFile, guess_max = 300000)
+d = bind_rows(d, sf::read_sf(urbanPointsFile) %>% mutate(POINT_ID = -row_number(), class = paste0('U', class)) %>% rename(LC1 = class))
 names(d) = tolower(names(d))
-names(d)[2] = 'point_id'
 dd = d %>%
   dplyr::select(point_id, th_long, th_lat) %>%
   dplyr::mutate(data = wgs2grid(.data$th_long, .data$th_lat)) %>%
