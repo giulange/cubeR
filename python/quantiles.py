@@ -22,13 +22,17 @@ args = parser.parse_args()
 if args.gdalCacheSize is not None:
     gdal.SetCacheMax(args.gdalCacheSize)
 
-src = [] # we must keep file objects because without them band objects get corrupted
-srcBands = []
+##
+#src = [] # we must keep file objects because without them band objects get corrupted
+#srcBands = []
+#with open(args.inputFile) as fi:
+#    for i in fi:
+#        tmp = gdal.Open(i.strip())
+#        src.append(tmp)
+#        srcBands.append(tmp.GetRasterBand(1))
 with open(args.inputFile) as fi:
-    for i in fi:
-        tmp = gdal.Open(i.strip())
-        src.append(tmp)
-        srcBands.append(tmp.GetRasterBand(1))
+    srcFiles = [i.strip() for i in fi.readlines()]
+##
 nodata = srcBands[0].GetNoDataValue()
 
 driver = gdal.GetDriverByName('GTiff')
@@ -57,8 +61,11 @@ while px < src[0].RasterXSize:
 
         # read source data into array [pixel, time]
         dataSrc = []
-        for i in srcBands:
-            dataSrc.append(i.ReadAsArray(px, py, bsx, bsy))
+        #for i in srcBands:
+        #    dataSrc.append(i.ReadAsArray(px, py, bsx, bsy))
+        for i in srcFiles:
+            tmp = gdal.Open(i)
+            dataSrc.append(tmp.GetRasterBand(1).ReadAsArray(px, py, bsx, bsy))
         dataSrc = numpy.stack(dataSrc, -1).reshape((bsy * bsx, len(srcBands)))
         # reorganize in a way nodata values are always last on the time axis
         nodataTmp = numpy.iinfo(dataSrc.dtype).max

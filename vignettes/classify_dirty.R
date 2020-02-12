@@ -8,9 +8,9 @@ tmpDir = '/eodc/private/boku/ACube2/tmp'
 year = 2018
 outBand = 'CLASS'
 blockSize = 1000000
-learnerNumThreads = 4
-nCores = 2
-cubeRpath = '.'
+learnerNumThreads = 10
+nCores = 3
+cubeRpath = '/eodc/private/boku/software/cubeR'
 skipExisting = TRUE
 
 args = commandArgs(TRUE)
@@ -69,11 +69,13 @@ output = foreach(tls = tiles, .combine = bind_rows) %dopar% {
           .dummy = factor(rep_len(models[[1]]$levels, n())),
           block = as.integer(row_number() / blockSize)
         )
+      cat(tls, ' input data read', sep = '')
 
       output = input %>%
         dplyr::group_by(block) %>%
         dplyr::do({
           x = .data
+          cat(tls, ' block ', x$block[1], '\n', sep = '')
           result = dplyr::tibble(
             class = rep(NA_integer_, nrow(x)),
             prob = rep(NA_integer_, nrow(x))
@@ -99,6 +101,7 @@ output = foreach(tls = tiles, .combine = bind_rows) %dopar% {
       raster::writeRaster(outputProb, tmpFiles[2], datatype = 'INT1U', overwrite = TRUE, options = c('COMPRESS=DEFLATE', 'TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512'))
       file.rename(tmpFiles, outFiles)
       processed = TRUE
+      cat(tls, ' finished\n', sep = '')
     })
   }
   dplyr::tibble(tileFile = outFiles, processed = processed)

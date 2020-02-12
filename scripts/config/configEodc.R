@@ -32,7 +32,7 @@ chunksPerCore = 10
 # (two latter ones work only on machines with a direct access to the BOKU's EODC storage)
 dwnldMethod = 'symlink'
 # maximum accepted local files to be deleted during the download (to avoid hitting own foot)
-dwnldMaxRemovals = 1000
+dwnldMaxRemovals = 10000
 # s2.boku.eodc.eu database connection paramerters required for the "symlink" download method
 dwnldDbParam = list(host = '10.250.16.131', port = 5432, user = 'eodc', dbname = 'bokudata')
 ## parameters required for the "download" download method
@@ -71,8 +71,7 @@ indicatorSkipExisting = TRUE
 
 # band names of bands used to compute within-a-period maxima (can be more than one band)
 whichBands = list(
-  '1 month' = c('NDVI2'),
-#  '1 month' = c('NDVI2', 'NDVI20'),
+  '1 month' = c('NDVI2', 'NDVI20'),
   '1 year'  = c('NDVI2')
 )
 # prefix preppended to the orignal band name to get the target "which band name"
@@ -86,23 +85,17 @@ whichSkipExisting = TRUE
 
 # band names of bands for which composites should be computed
 compositeBands = list(
-  band      = c('NDVI2'),
-  whichBand = c('NMAXNDVI2'),
-  outBand   = c('NDVI2')
+  band      = c('NDVI2',     'LAI',       'TCI',       'B02',       'B03',       'B04',       'B05',        'B06',        'B07',        'B08',       'B8A',        'B11',        'B12',        'FAPAR',     'FCOVER'),
+  whichBand = c('NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI20', 'NMAXNDVI20', 'NMAXNDVI20', 'NMAXNDVI2', 'NMAXNDVI20', 'NMAXNDVI20', 'NMAXNDVI20', 'NMAXNDVI2', 'NMAXNDVI2'),
+  outBand   = c('NDVI2',     'LAI2',      'TCI2',      'B02',       'B03',       'B04',       'B05',        'B06',        'B07',        'B08',       'B8A',        'B11',        'B12',        'FAPAR2',    'FCOVER2')
 )
-#compositeBands = list(
-#  band      = c('NDVI2',     'LAI',       'TCI',       'B02',       'B03',       'B04',       'B05',        'B06',        'B07',        'B08',       'B8A',        'B11',        'B12',        'FAPAR',     'FCOVER'),
-#  whichBand = c('NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI2', 'NMAXNDVI20', 'NMAXNDVI20', 'NMAXNDVI20', 'NMAXNDVI2', 'NMAXNDVI20', 'NMAXNDVI20', 'NMAXNDVI20', 'NMAXNDVI2', 'NMAXNDVI2'),
-#  outBand   = c('NDVI2',     'LAI2',      'TCI2',      'B02',       'B03',       'B04',       'B05',        'B06',        'B07',        'B08',       'B8A',        'B11',        'B12',        'FAPAR2',    'FCOVER2')
-#)
 # processing block size (affects memory usage)
 compositeBlockSize = 1024
 # should already existing composite images be skipped (TRUE) or reprocessed anyway (FALSE)
 compositeSkipExisting = TRUE
 
 # bands to be aggregated into quantiles
-aggregateBands = c('NDVI2')
-#aggregateBands = c('NDVI2', 'NDTI2', 'MNDWI2', 'NDBI2', 'BSI2', 'BLFEI2')
+aggregateBands = c('NDVI2', 'NDTI2', 'MNDWI2', 'NDBI2', 'BSI2', 'BLFEI2')
 # processing block size (affects memory usage)
 aggregateBlockSize = 512
 # quantiles to be computed
@@ -127,20 +120,19 @@ wintersummerLcBand = 'LC'
 wintersummerResamplingMethod = 'med'
 wintersummerNdviMin = 2000
 wintersummerGdalOpts = '--config GDAL_CACHEMAX 1024 -wm 1024 -multi -wo NUM_THREADS=2 -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512"'
-wintersummerSkipExisting = TRUE
+wintersummerSkipExisting = FALSE
 
 tileRawBands = character()
 tilePeriodBands = list(
-  '1 month' = c('DOYMAXNDVI2'),
-#  '1 month' = c('NDVI2', 'LAI2', 'TCI2', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'FAPAR2', 'FCOVER2', 'DOYMAXNDVI2'),
+  '1 month' = c('NDVI2', 'LAI2', 'TCI2', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B11', 'B12', 'FAPAR2', 'FCOVER2', 'DOYMAXNDVI2'),
   '1 year' = c(
     'DOYMAXNDVI2', 'N2',
-    'NDVI2q05',  'NDVI2q50',  'NDVI2q98'
-#    'NDTI2q05',  'NDTI2q50',  'NDTI2q98', 
-#    'MNDWI2q05', 'MNDWI2q50', 'MNDWI2q98', 
-#    'NDBI2q05',  'NDBI2q50',  'NDBI2q98', 
-#    'BSI2q05',   'BSI2q50',   'BSI2q98', 
-#    'BLFEI2q05', 'BLFEI2q50', 'BLFEI2q98'
+    'NDVI2q05',  'NDVI2q50',  'NDVI2q98',
+    'NDTI2q05',  'NDTI2q50',  'NDTI2q98', 
+    'MNDWI2q05', 'MNDWI2q50', 'MNDWI2q98', 
+    'NDBI2q05',  'NDBI2q50',  'NDBI2q98', 
+    'BSI2q05',   'BSI2q50',   'BSI2q98', 
+    'BLFEI2q05', 'BLFEI2q50', 'BLFEI2q98'
   )
 )
 # should already existing tiles be skipped (TRUE) or reprocessed anyway (FALSE)

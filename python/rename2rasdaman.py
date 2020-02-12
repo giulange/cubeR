@@ -21,7 +21,7 @@ for utm in utms:
     files = os.listdir(os.path.join(args.dataDir, utm))
     files.sort()
     for fl in files:
-        if args.match in fl:
+        if re.search(args.match, fl):
             localPath = os.path.join(args.dataDir, utm, fl)
             (date, band, tile) = fl[0:-4].split('_')
             if len(args.tiles) > 0 and tile not in args.tiles:
