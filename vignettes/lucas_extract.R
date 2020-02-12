@@ -31,10 +31,14 @@ options(cores = nCores)
 d = readr::read_csv(pointsFile, guess_max = 300000)
 d = bind_rows(d, sf::read_sf(urbanPointsFile) %>% mutate(POINT_ID = -row_number(), class = paste0('U', class)) %>% rename(LC1 = class))
 names(d) = tolower(names(d))
-dd = d %>%
-  dplyr::select(point_id, th_long, th_lat) %>%
-  dplyr::mutate(data = wgs2grid(.data$th_long, .data$th_lat)) %>%
-  tidyr::unnest(.data$data) %>%
+d = d %>%
+  dplyr::select(point_id, th_long, th_lat)
+dd = foreach(tls = assignToCores(d, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
+  tls %>%
+    dplyr::mutate(data = wgs2grid(.data$th_long, .data$th_lat)) %>%
+    tidyr::unnest(.data$data)
+}
+dd = dd %>%
   dplyr::group_by(tile) %>%
   tidyr::nest()
 res = foreach(tls = assignToCores(dd, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
