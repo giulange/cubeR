@@ -40,7 +40,8 @@ dd = foreach(tls = assignToCores(d, nCores, chunksPerCore), .combine = bind_rows
 }
 dd = dd %>%
   dplyr::group_by(tile) %>%
-  tidyr::nest()
+  tidyr::nest() %>%
+  dplyr::arrange(tile)
 res = foreach(tls = assignToCores(dd, nCores, chunksPerCore), .combine = bind_rows) %dopar% {
   tls %>%
     dplyr::group_by(tile) %>%
