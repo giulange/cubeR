@@ -57,3 +57,11 @@ res = foreach(tls = assignToCores(dd, nCores, chunksPerCore), .combine = bind_ro
 }
 warnings()
 
+data = list()
+for (i in list.files(saveDir, full.names = TRUE)) {
+  load(i)
+  data[[length(data) + 1]] = extracted
+}
+data = suppressWarnings(dplyr::bind_rows(data))
+save(data, file = '/eodc/private/boku/ACube2/extracted.RData')
+
