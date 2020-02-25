@@ -26,6 +26,7 @@ parser.add_argument('--formatOptions', nargs='*', default=['COMPRESS=DEFLATE', '
 parser.add_argument('--algorithm', default='near', help='resampling algorithm to be used for the highest resolution')
 parser.add_argument('--band', default='NDVI2')
 parser.add_argument('--maskBand', default='CLOUDMASK2')
+parser.add_argument('--nodataValue', default=32767)
 parser.add_argument('--dataDir', default='/eodc/private/boku/ACube2/raw')
 parser.add_argument('--geomCacheFile', default='cache.geojson')
 parser.add_argument('--tmpDir', default='tmp')
@@ -143,7 +144,7 @@ for fl in masks:
         dates[fl['date']]['masks'].append(fl)
 inputData = {}
 inputMasks = {}
-sampleOutputFile = None
+xRes = yRes = None
 for date, val in dates.items():
     for key, files in val.items():
         dstFile = os.path.join(args.tmpDir, '%s_%s.tif' % (date, key))
@@ -151,14 +152,14 @@ for date, val in dates.items():
             inputMasks[date] = dstFile
         else:
             inputData[date] = dstFile
-            sampleInputFile = dstFile
+
         gdal.Warp(
             dstFile, 
             [x['file'] for x in files], 
             format='GTiff', # output format ("GTiff", etc...) 
             #outputBounds=None, # output bounds as (minX, minY, maxX, maxY) in target SRS
             #outputBoundsSRS=None, # SRS in which output bounds are expressed, in the case they are not expressed in dstSRS
-            #xRes=None, yRes=None, # output resolution in target SRS
+            xRes=xRes, yRes=yRes, # output resolution in target SRS
             #targetAlignedPixels=False, # whether to force output bounds to be multiple of output resolution
             #width=0, height=0, # dimensions of the output raster in pixel
             #srcSRS=None, # source SRS
@@ -190,29 +191,33 @@ for date, val in dates.items():
             #metadataConflictValue=None, # metadata data conflict value
             #setColorInterpretation=False, # whether to force color interpretation of input bands to output bands
         )
+        if xRes is None:
+            rastDest  = gdal.Open(dstFile)
+            geotrDest = rastDest.GetGeoTransform()
+            prjDest   = rastDest.GetProjection()
+            dtypeDest = rastDest.GetRasterBand(1).DataType
+            X         = rastDest.RasterXSize
+            Y         = rastDest.RasterYSize
+            xRes      = geotrDest[1]
+            yRes      = geotrDest[5]
+            rastDest = None
+
 
 # Prepare outputs
 dateMin = datetime.datetime.strptime(min(list(dates)), '%Y-%m-%d').date()
 dateMax = datetime.datetime.strptime(max(list(dates)), '%Y-%m-%d').date()
 T = (dateMax - dateMin).days + 1
 
-rastDest  = gdal.Open(sampleInputFile)
-geotrDest = rastDest.GetGeoTransform()
-prjDest   = rastDest.GetProjection()
-dtypeDest = rastDest.GetRasterBand(1).DataType
-X         = rastDest.RasterXSize
-Y         = rastDest.RasterYSize
-rastDest = None
-
 filesOut = []
 driver = gdal.GetDriverByName('GTiff')
 t = 0
-while t <= T:
+while t < T:
     dateOut = (dateMin + datetime.timedelta(days=t)).isoformat()
     fileOut = os.path.join(args.outputDir, '%s_%s_%s.tif' % (dateOut, args.band, args.outputTileName))
     rastOut = driver.Create(fileOut, X, Y, 1, dtypeDest, args.formatOptions)
     rastOut.SetGeoTransform(geotrDest)
     rastOut.SetProjection(prjDest)
+    rastOut.GetRasterBand(1).SetNoDataValue(args.nodataValue)
     rastOut = None
     filesOut.append(fileOut)
     t += args.period
@@ -225,6 +230,7 @@ w = numpy.empty((P, T), numpy.float32)
 c = numpy.empty((P, T), numpy.float32)
 d = numpy.empty((P, T), numpy.float32)
 z = numpy.empty((P, T), numpy.float32)
+m = numpy.empty((P), numpy.bool)
 
 #@jit(nopython=True)
 def whittakerC(l, T, y, w, c, d, z, Pmin, Pmax):
@@ -238,7 +244,10 @@ def whittakerC(l, T, y, w, c, d, z, Pmin, Pmax):
                 c[p][t] = -l / d[p][t]
                 z[p][t] = w[p][t] * y[p][t] - c[p][t - 1] * z[p][t - 1]
             d[p][T - 1] = w[p][T - 1] + l - c[p][T - 2] * c[p][T - 2] * d[p][T - 2]
-            z[p][T - 1] = (w[p][T - 1] * y[p][T - 1] - c[p][T - 2] * z[p][T - 2]) / d[p][T - 1]
+            if d[p][T - 1] > 0:
+                z[p][T - 1] = (w[p][T - 1] * y[p][T - 1] - c[p][T - 2] * z[p][T - 2]) / d[p][T - 1]
+            else:
+                z[p][T - 1] = numpy.nan
             for t in range(T - 2, -1, -1):
                 z[p][t] = z[p][t] / d[p][t] - c[p][t] * z[p][t + 1]
 
@@ -253,19 +262,26 @@ while px < X:
     py = 0
     while py < Y:
         bsy = min(args.blockSize, Y - py)
+        p = bsx * bsy
+        print('Block %d %d (%d %d) [%d %d]' % (px, py, bsx, bsy, X, Y))
+
+        # initilize what requires initialization
+        w.fill(0)
+        y.fill(0)
 
         # read input data
         for date, fn in inputData.items():
             rastMask    = gdal.Open(inputMasks[date])
             bandMask    = rastMask.GetRasterBand(1)
 
-            di       = (datetime.datetime.strptime(date, '%Y-%m-%d').date() - dateMin).days
-            rastIn   = gdal.Open(fn)
-            bandIn   = rastIn.GetRasterBand(1)
-            y[:, di] = bandIn.ReadAsArray(0, 0, bsx, bsy).reshape((P))
-            w[:, di] = 1
+            di         = (datetime.datetime.strptime(date, '%Y-%m-%d').date() - dateMin).days
+            rastIn     = gdal.Open(fn)
+            bandIn     = rastIn.GetRasterBand(1)
+            y[0:p, di] = bandIn.ReadAsArray(px, py, bsx, bsy).reshape((p))
+            w[0:p, di] = 1
             w[y[:, di] == bandIn.GetNoDataValue(), di] = 0
-            w[bandMask.ReadAsArray(0, 0, bsx, bsy).reshape((P)) == bandMask.GetNoDataValue(), di] = 0
+            m[0:p]     = bandMask.ReadAsArray(px, py, bsx, bsy).reshape((p)) == bandMask.GetNoDataValue()
+            w[m, di]   = 0
 
             bandMask = None
             rastMask = None
@@ -273,20 +289,26 @@ while px < X:
             rastIn   = None
 
         # apply the whitakker smoother
-        #ranges = list(range(0, bsx * bsy, math.ceil(bsx * bsy / args.nCores)))
+        #ranges = list(range(0, p, math.ceil(p / args.nCores)))
         #pool.map(whittakerPool, ranges)
-        whittakerC(args.lmbd, T, y, w, c, d, z, 0, bsx * bsy)
+        whittakerC(args.lmbd, T, y, w, c, d, z, 0, p)
 
         # write output
+        z[numpy.isnan(z)] = args.nodataValue
         di = 0
         while di < T:
             rastOut = gdal.Open(filesOut[int(di / args.period)], 1)
             bandOut = rastOut.GetRasterBand(1)
-            bandOut.WriteArray(z[:, di].reshape((bsy, bsx)), px, py)
+            bandOut.WriteArray(z[0:p, di].reshape((bsy, bsx)), px, py)
             bandOut = None
             rastOut = None
             di += args.period
 
         py += bsy
     px += bsx
+
+#for date, fn in inputData.items():
+#    os.unlink(fn)
+#for date, fn in inputMasks.items():
+#    os.unlink(fn)
 
