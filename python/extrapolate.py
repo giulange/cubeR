@@ -16,32 +16,32 @@ import sys
 from numba import jit
 
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description='Computes a gap-filled data seriesi for a given input geometry and time span from the cubeR package raw data image file structure.')
 parser.add_argument('--verbose', action='store_true')
-parser.add_argument('--blockSize', type=int, default=512)
-parser.add_argument('--gdalCacheSize', type=int, default=2147483648)
-parser.add_argument('--nCores', type=int, default=8)
-parser.add_argument('--lmbd', type=float, default=1)
-parser.add_argument('--period', type=int, default=10)
-parser.add_argument('--formatOptions', nargs='*', default=['COMPRESS=DEFLATE', 'TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512'], help='output format options')
-parser.add_argument('--algorithm', default='near', help='resampling algorithm to be used for the highest resolution')
-parser.add_argument('--band', default='NDVI2')
-parser.add_argument('--maskBand', default='CLOUDMASK2')
-parser.add_argument('--nodataValue', default=32767)
-parser.add_argument('--dataDir', default='/eodc/private/boku/ACube2/raw')
-parser.add_argument('--geomCacheFile', default='cache.geojson')
-parser.add_argument('--tmpDir', default='tmp')
-parser.add_argument('shapeFileName')
+parser.add_argument('--blockSize', type=int, default=512, help='[defaults to %(default)s] Processing block size. The bigger the block, the more memory is needed (it is roughly `blockSize*(dateTo-dateFrom+1)*20` bytes) but processing should be done faster. On the other hand if input files are internally tiled using blockSize equal to the internal tile size is the best choice and using bigger blockSize is unlikely to give better performance.')
+parser.add_argument('--gdalCacheSize', type=int, default=2048, help='[defaults to %(default)s] Maximum size of internal GDAL cache in MB. Consider setting a lower value if you run into memory problems.')
+parser.add_argument('--nCores', type=int, default=1, help='[defaults to %(default)s] Number of parallel processes to use. The execution time benefits greatly from using multiple cores but memory consumption also scales lineary with the number of processes.')
+parser.add_argument('--lmbd', type=float, default=1, help='[defaults to %(default)s] Whittaker smoother lambda parameter value.')
+parser.add_argument('--period', type=int, default=10, help='[defaults to %(default)s] Output data period in days. Outputs will be generated for `dateOut_n = dateFrom + n*period [days]` for n from 0 up to `dateOut_n <= dateTo`.')
+parser.add_argument('--formatOptions', nargs='*', default=['COMPRESS=DEFLATE', 'TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512'], help='[defaults to %(default)s] Output format options.')
+parser.add_argument('--algorithm', default='near', help='[defaults to %(default)s] Algorithm to be used to reproject input data to the input shape projection')
+parser.add_argument('--maskBand', default='CLOUDMASK2', help='[defaults to %(default)s] Mask band name')
+parser.add_argument('--nodataValue', default=32767, help='[defaults to %(default)s] Output data nodata value')
+parser.add_argument('--dataDir', default='/eodc/private/boku/ACube2/raw', help='[defaults to %(default)s] Directory storying cubeR package raw image file structure.')
+parser.add_argument('--geomCacheFile', default='cache.geojson', help='[defaults to %(default)s] Path to a file storying raw data tiles geometry cache. If it does not exist, the cache will be built and saved to this file.')
+parser.add_argument('--tmpDir', default='/eodc/private/boku/ACube2/tmp', help='[defaults to %(default)s] Temporary dir location.')
+parser.add_argument('shapeFileName', help='Path to a vector file defining the target geometry. Output files will be generated in the same projection as the shapeFileName projection.')
+parser.add_argument('band', help='Name of band to be processed')
 parser.add_argument('dateFrom')
 parser.add_argument('dateTo')
-parser.add_argument('outputDir')
-parser.add_argument('outputTileName')
+parser.add_argument('outputDir', help='Directory to save output data to. Output file names are {date}_{band}_{tile}.tif where {tile} is taken from the outputTileName parameter.')
+parser.add_argument('outputTileName', help='{tile} part value of the output file names - see the outputDir parameter description.')
 args = parser.parse_args()
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG if args.verbose else logging.INFO)
 
 if args.gdalCacheSize is not None:
-    gdal.SetCacheMax(args.gdalCacheSize)
+    gdal.SetCacheMax(args.gdalCacheSize * 1024 * 1024)
 
 ####################
 # Read the input geometry
@@ -159,7 +159,7 @@ if n == 0:
 # Cut and reproject
 ####################
 
-def reproject(files, tmpDir, date, bandOut, algorithm, prjWkt, fileCut, xRes, yRes):
+def reproject(files, tmpDir, date, bandOut, algorithm, prjWkt, fileCut, xRes, yResi, blockSize):
     try:
         with nBlock.get_lock():
             nBlock.value  += 1
@@ -183,7 +183,7 @@ def reproject(files, tmpDir, date, bandOut, algorithm, prjWkt, fileCut, xRes, yR
         #warpOptions=None, # https://gdal.org/api/gdalwarp_cpp.html#_CPPv415GDALWarpOptions
         #errorThreshold=None, # error threshold for approximation transformer (in pixels)
         #warpMemoryLimit=None, # size of working buffer in bytes
-        creationOptions=['TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512'], # list of creation options
+        creationOptions=['TILED=YES', 'BLOCKXSIZE=%d' % blockSize, 'BLOCKYSIZE=%d' % blockSize], # list of creation options
         #outputType=GDT_Unknown, # output type (gdal.GDT_Byte, etc...)
         #workingType=GDT_Unknown, # working type (gdal.GDT_Byte, etc...)
         resampleAlg=algorithm, # resampling mode - https://gdal.org/programs/gdalwarp.html#cmdoption-gdalwarp-r
@@ -216,7 +216,7 @@ def reprojectPoolInit(nBlocks_, nBlock_):
     nBlock  = nBlock_
 
 prjSrcWkt = prjSrc.ExportToWkt()
-dateTmp, fileTmp = reproject(dates[list(dates)[0]]['bands'], args.tmpDir, list(dates)[0], 'bands', args.algorithm, prjSrcWkt, fileCut, None, None)
+dateTmp, fileTmp = reproject(dates[list(dates)[0]]['bands'], args.tmpDir, list(dates)[0], 'bands', args.algorithm, prjSrcWkt, fileCut, None, None, args.blockSize)
 rastDest  = gdal.Open(fileTmp)
 geotrDest = rastDest.GetGeoTransform()
 prjDest   = rastDest.GetProjection()
@@ -231,8 +231,8 @@ blocksBands = []
 blocksMasks = []
 for date, val in dates.items():
     if date != dateTmp:
-        blocksBands.append((val['bands'], args.tmpDir, date, 'bands', args.algorithm, prjSrcWkt, fileCut, xRes, yRes))
-    blocksMasks.append((val['masks'], args.tmpDir, date, 'masks', args.algorithm, prjSrcWkt, fileCut, xRes, yRes))
+        blocksBands.append((val['bands'], args.tmpDir, date, 'bands', args.algorithm, prjSrcWkt, fileCut, xRes, yRes, args.blockSize))
+    blocksMasks.append((val['masks'], args.tmpDir, date, 'masks', args.algorithm, prjSrcWkt, fileCut, xRes, yRes, args.blockSize))
 
 logging.info('Preparing inputs (%d x %d)' % (X, Y))
 nBlock = multiprocessing.Value('i')
