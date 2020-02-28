@@ -159,7 +159,7 @@ if n == 0:
 # Cut and reproject
 ####################
 
-def reproject(files, tmpDir, date, bandOut, algorithm, prjWkt, fileCut, xRes, yResi, blockSize):
+def reproject(files, tmpDir, date, bandOut, algorithm, prjWkt, fileCut, xRes, yRes, blockSize):
     try:
         with nBlock.get_lock():
             nBlock.value  += 1
