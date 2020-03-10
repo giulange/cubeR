@@ -6,7 +6,6 @@
 #' @export
 extractPixelValues = function(x, y, file) {
   r = raster::raster(file)
-  v = raster::getValues(r)
-  xy = v[y * nrow(r) + x + 1]
+  xy = raster::extract(r, y * nrow(r) + x + 1)
   return(xy)
 }

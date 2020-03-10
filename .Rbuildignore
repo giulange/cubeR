@@ -6,3 +6,5 @@
 ^vignettes/.*xml$
 ^python$
 ^scripts$
+^wiki$
+^docker$

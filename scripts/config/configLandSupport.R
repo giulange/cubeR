@@ -5,7 +5,7 @@ cubeRpath = '/home/giuliano/git/cubeR'
 # wdir = '/media/GFTP/landsupport/cubeR'
 
 # file containing the grid (every feture must provide the TILE property)
-gridFile = '/media/GFTP/landsupport/cubeR/tile_prop/Grid_LAEA5210_100K_polygons.shp'
+gridFile = '/media/GFTP/landsupport/cubeR/tile_prop/Grid_LAEA5210_100K_polygons.geojson'
 
 # directory for storing temporary files
 tmpDir = '/media/GFTP/landsupport/cubeR/tmp'

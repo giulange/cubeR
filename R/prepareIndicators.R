@@ -27,7 +27,8 @@ prepareIndicators = function(input, targetDir, tmpDir, indicators, skipExisting 
     ) %>%
     dplyr::mutate(
       outFile = getTilePath(targetDir, .data$tile, .data$date, .data$outBand)
-    )
+    ) %>%
+    ungroup()
 
   skipped = dplyr::tibble(tileFile = character())
   if (skipExisting) {
@@ -70,7 +71,7 @@ prepareIndicators = function(input, targetDir, tmpDir, indicators, skipExisting 
       )
     tmpFiles = processed %>%
       dplyr::select(.data$data) %>%
-      tidyr::unnest() %>%
+      tidyr::unnest(.data$data) %>%
       dplyr::filter(.data$command != '') %>%
       dplyr::select(.data$tileFile) %>%
       unlist() %>%

@@ -6,7 +6,8 @@
 vignettes/*RData
 /*RData
 /man
-
 core\.431
-
 core\.545
+/wiki
+/scripts/logs/
+missing.RData

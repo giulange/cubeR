@@ -1,4 +1,4 @@
-#!python
+#!/usr/bin/python3
 
 import argparse
 import datetime
@@ -21,26 +21,25 @@ args = parser.parse_args()
 if args.gdalCacheSize is not None:
     gdal.SetCacheMax(args.gdalCacheSize)
 
-src = [] # we must keep file objects because without them band objects get corrupted
-srcBands = []
-for i in args.inputFile:
-    tmp = gdal.Open(i)
-    src.append(tmp)
-    tmpBands = []
-    for j in range(tmp.RasterCount):
-        tmpBands.append(tmp.GetRasterBand(j + 1))
-    srcBands.append(tmpBands)
-nBands = len(srcBands[0])
-nodata = srcBands[0][0].GetNoDataValue()
+
+tmpSrcFile = gdal.Open(args.inputFile[0])
+tmpSrcBand = tmpSrcFile.GetRasterBand(1)
+X = tmpSrcFile.RasterXSize
+Y = tmpSrcFile.RasterYSize
+nodata = tmpSrcBand.GetNoDataValue()
+nBands = tmpSrcFile.RasterCount
 
 which = gdal.Open(args.whichFile)
 whichBand = which.GetRasterBand(1)
 nodataWhich = whichBand.GetNoDataValue()
 
+if X != which.RasterXSize or Y != which.RasterYSize:
+    raise Exception('Source files dimentions do not match')
+
 driver = gdal.GetDriverByName('GTiff')
-dst = driver.Create(args.outFile, src[0].RasterXSize, src[0].RasterYSize, nBands, srcBands[0][0].DataType, args.formatOptions)
-dst.SetGeoTransform(src[0].GetGeoTransform())
-dst.SetProjection(src[0].GetProjection())
+dst = driver.Create(args.outFile, X, Y, nBands, tmpSrcBand.DataType, args.formatOptions)
+dst.SetGeoTransform(tmpSrcFile.GetGeoTransform())
+dst.SetProjection(tmpSrcFile.GetProjection())
 dstBands = []
 for i in range(nBands):
     tmpBand = dst.GetRasterBand(i + 1)
@@ -48,16 +47,19 @@ for i in range(nBands):
         tmpBand.SetNoDataValue(nodata)
     dstBands.append(tmpBand)
 
+tmpSrcBand = None
+tmpSrcFile = None
+
 t = datetime.datetime.now()
 px = 0
-while px < src[0].RasterXSize:
-    bsx = min(args.blockSize, src[0].RasterXSize - px)
+while px < X:
+    bsx = min(args.blockSize, X - px)
     py = 0
-    while py < src[0].RasterYSize:
+    while py < Y:
         if args.verbose:
             print('%d %d (%s)' % (px, py, datetime.datetime.now() - t))
         t = datetime.datetime.now()
-        bsy = min(args.blockSize, src[0].RasterYSize - py)
+        bsy = min(args.blockSize, Y - py)
 
         dataWhich = whichBand.ReadAsArray(px, py, bsx, bsy)
         # dataWhich has shape (bsy, bsx)!
@@ -65,9 +67,11 @@ while px < src[0].RasterXSize:
         for band in range(nBands):
             dataDst = numpy.zeros((bsy, bsx))
 
-            for i in range(len(srcBands)):
-                dataSrc = srcBands[i][band].ReadAsArray(px, py, bsx, bsy)
+            for i in range(len(args.inputFile)):
+                tmp = gdal.Open(args.inputFile[i])
+                dataSrc = tmp.GetRasterBand(band + 1).ReadAsArray(px, py, bsx, bsy)
                 dataDst = dataDst + dataSrc * (dataWhich == i)
+                tmp = None
        
             if nodata is not None:
                 dataDst[dataWhich == nodataWhich] = nodata

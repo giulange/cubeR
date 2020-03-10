@@ -4,7 +4,7 @@ if (length(args) < 4) {
 }
 names(args) = c('cfgFile', 'region', 'from', 'to')
 t0 = Sys.time()
-cat(paste0(c('Running tile.R', args, as.character(Sys.time()), '\n'), collapse = '\t'))
+cat(paste0(c('Running renameACube.R', args, as.character(Sys.time()), '\n'), collapse = '\t'))
 source(args[1])
 
 devtools::load_all(cubeRpath, quiet = TRUE)
@@ -49,7 +49,7 @@ tiles = tilesRaw %>%
 tileShapes = tiles %>%
   filter(period != dateMax) %>%
   group_by(utm) %>%
-  filter(band == 'LAI2') %>%
+  filter(band == first(band)) %>%
   filter(row_number() == 1) %>%
   mutate(
     tileFile = getTilePath(periodsDir, utm, period, band)
@@ -119,10 +119,14 @@ tmp = foreach(tls = assignToCores(tiles, nCores, chunksPerCore), .combine = bind
 }
 
 # 4. Rename
-
 tiles = tiles %>%
   mutate(
     targetFile = sprintf('%s/%s/%s_SEN2COR_%s_%s------_%s_%s_EU010M_%sT1.tif', acubeDir, name, gsub(' ', '-', sprintf('%-10s', name)), ab, level, gsub('-', '', periodMin), gsub('-', '', periodMax), tile)
   )
 tmp = createDirs(tiles$targetFile)
 tmp = file.rename(tiles$tileFile, tiles$targetFile)
+logDir = paste0(acubeLogsDir, '/', format(Sys.time(), '%Y%m%d_%H%M%S'))
+dir.create(logDir)
+writeLines(tiles$targetFile, paste0(logDir, '/delete.txt'))
+writeLines(tiles$targetFile, paste0(logDir, '/insert.txt'))
+
